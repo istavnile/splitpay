@@ -3,14 +3,17 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
-// TODO: Replace with your actual Supabase URL and Anon Key
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// --- DYNAMIC CONFIGURATION (Runtime or Build-time) ---
+// We check window.APP_CONFIG first (populated at runtime by Nginx/envsubst)
+// or fall back to process.env (populated at build-time by Expo/Build Args)
+const supabaseUrl = window.APP_CONFIG?.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = window.APP_CONFIG?.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
     console.error("❌ CRITICAL: Missing Supabase Configuration!");
-    console.log("EXPO_PUBLIC_SUPABASE_URL:", supabaseUrl ? "Defined" : "MISSING");
-    console.log("EXPO_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "Defined" : "MISSING");
+    console.log("APP_CONFIG Check:", window.APP_CONFIG ? "Exists" : "NOT FOUND");
+    console.log("SUPABASE_URL:", supabaseUrl ? "Defined" : "MISSING");
+    console.log("SUPABASE_ANON_KEY:", supabaseAnonKey ? "Defined" : "MISSING");
 }
 
 // Fallback to empty strings if missing to avoid breaking imports

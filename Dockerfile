@@ -45,5 +45,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Expose port 80 (This is the port easy panel will bind to)
 EXPOSE 80
 
-# Start NGINX
-CMD ["nginx", "-g", "daemon off;"]
+# Start NGINX with dynamic environment variable injection
+# This creates config.js from the template before starting Nginx
+CMD ["/bin/sh", "-c", "envsubst < /usr/share/nginx/html/config-template.js > /usr/share/nginx/html/config.js && echo '✅ Dynamic config.js generated' && exec nginx -g 'daemon off;'"]
