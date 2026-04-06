@@ -14,9 +14,19 @@ RUN npm ci
 # (node_modules and local builds are excluded via .dockerignore)
 COPY . .
 
+# Set environment variables for the build process (Baked into the JS bundle)
+ARG EXPO_PUBLIC_SUPABASE_URL
+ARG EXPO_PUBLIC_SUPABASE_ANON_KEY
+
+ENV EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
+ENV EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
+
 # Build the Expo web application
-# This generates the static web files in the /app/dist folder
 RUN npx expo export -p web
+
+# Ensure PWA assets from public/ are in the dist folder
+# Some Expo versions don't copy these automatically in certain environments
+RUN cp -r public/* dist/ || true
 
 # ==========================================
 # STAGE 2: Serve with NGINX

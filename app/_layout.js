@@ -11,7 +11,13 @@ const InitialLayout = () => {
     const router = useRouter();
 
     useEffect(() => {
-        if (loading) return;
+        console.log("🚀 App Started - Initializing Layout");
+        if (loading) {
+            console.log("⏳ Still Loading Auth...");
+            return;
+        }
+
+        console.log("✅ Auth Loaded - User:", user?.email || (isGuest ? "Guest" : "Anonymous"));
 
         const inAppGroup = segments[0] === '(app)';
         const isAuthenticated = user || isGuest;

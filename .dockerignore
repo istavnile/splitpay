@@ -2,7 +2,6 @@ node_modules
 .expo
 .git
 .gitignore
-app.json
 dist
 ios
 android
