@@ -39,6 +39,9 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy the custom NGINX configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Install gettext for envsubst (not always present in alpine)
+RUN apk add --no-cache gettext
+
 # Copy the built Expo Web static files from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
