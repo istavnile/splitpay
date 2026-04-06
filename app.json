@@ -2,6 +2,7 @@
   "expo": {
     "name": "SplitPay",
     "slug": "SplitPay",
+    "scheme": "splitpay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "cloud.istavnile.splitpay"
     },
     "android": {
+      "package": "cloud.istavnile.splitpay",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +26,26 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "pwa": {
+        "name": "SplitPay",
+        "shortName": "SplitPay",
+        "description": "Gestiona tus gastos grupales de forma equitativa.",
+        "themeColor": "#059669",
+        "backgroundColor": "#030712",
+        "display": "standalone",
+        "orientation": "portrait"
+      }
+    },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      "expo-router"
+    ]
   }
 }
