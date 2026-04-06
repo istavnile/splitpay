@@ -9,6 +9,7 @@ android
 README.md
 Dockerfile
 .dockerignore
-nginx.conf
 supabase_schema.sql
 migration.sql
+.DS_Store
+._*
