@@ -50,10 +50,10 @@ EXPOSE 80
 
 # Create a custom entrypoint script to generate config.js AND nginx.conf at runtime
 RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-generate-config.sh && \
-    echo 'export SUPABASE_HOSTNAME=$(echo $EXPO_PUBLIC_SUPABASE_URL | sed -e "s|^[^/]*//||" -e "s|/.*$||")' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'export SUPABASE_HOSTNAME=$(echo $EXPO_PUBLIC_SUPABASE_URL | sed -E "s|^(https?://)?([^/]+).*|\2|")' >> /docker-entrypoint.d/40-generate-config.sh && \
     echo 'envsubst < /usr/share/nginx/html/config-template.js > /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
-    echo 'envsubst '"'"'$EXPO_PUBLIC_SUPABASE_URL $SUPABASE_HOSTNAME'"'"' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/40-generate-config.sh && \
-    echo 'echo "✅ Dynamic config.js and nginx.conf generated"' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'envsubst '"'"'$SUPABASE_HOSTNAME'"'"' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "✅ Dynamic config.js and nginx.conf generated (Hostname: $SUPABASE_HOSTNAME)"' >> /docker-entrypoint.d/40-generate-config.sh && \
     chmod +x /docker-entrypoint.d/40-generate-config.sh
 
 # Start NGINX

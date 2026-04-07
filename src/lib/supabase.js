@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 // --- DYNAMIC CONFIGURATION (Runtime or Build-time) ---
 // We check window.APP_CONFIG first (populated at runtime by Nginx/envsubst)
 // or fall back to process.env (populated at build-time by Expo/Build Args)
-const supabaseUrl = (window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG.SUPABASE_URL.trim() !== "" && window.APP_CONFIG.SUPABASE_URL !== "${EXPO_PUBLIC_SUPABASE_URL}") 
+let supabaseUrl = (window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG.SUPABASE_URL.trim() !== "" && window.APP_CONFIG.SUPABASE_URL !== "${EXPO_PUBLIC_SUPABASE_URL}") 
     ? window.APP_CONFIG.SUPABASE_URL 
     : (typeof window !== 'undefined' ? (window.location.origin === "http://localhost:8081" || window.location.origin.includes("192.168") ? process.env.EXPO_PUBLIC_SUPABASE_URL : window.location.origin) : process.env.EXPO_PUBLIC_SUPABASE_URL);
 
@@ -14,8 +14,15 @@ const supabaseAnonKey = (window.APP_CONFIG?.SUPABASE_ANON_KEY && window.APP_CONF
     ? window.APP_CONFIG.SUPABASE_ANON_KEY 
     : process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+// --- Sanitización del URL ---
+// Si el URL no tiene protocolo y no es una ruta relativa, le añadimos https://
+if (supabaseUrl && !supabaseUrl.startsWith('http') && !supabaseUrl.startsWith('/')) {
+    supabaseUrl = `https://${supabaseUrl}`;
+}
+
 // --- DIAGNÓSTICO DE CONFIGURACIÓN ---
-console.log("🔍 [Supabase Diagnostic] URL:", supabaseUrl || "MISSING");
+console.log("🔍 [Supabase Diagnostic] Raw URL:", window.APP_CONFIG?.SUPABASE_URL || "N/A");
+console.log("🔍 [Supabase Diagnostic] Sanitized URL:", supabaseUrl || "MISSING");
 console.log("🔍 [Supabase Diagnostic] Key Length:", supabaseAnonKey ? supabaseAnonKey.length : 0);
 console.log("🔍 [Supabase Diagnostic] Origin:", typeof window !== 'undefined' ? window.location.origin : "N/A");
 
