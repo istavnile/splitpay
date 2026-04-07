@@ -17,10 +17,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Add a script to inject environment variables at runtime into config.js
-RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-generate-config.sh && \
-    echo 'CLEAN_URL=$(echo $POCKETBASE_URL | tr -d "\r")' >> /docker-entrypoint.d/40-generate-config.sh && \
-    echo 'echo "window.APP_CONFIG = { POCKETBASE_URL: \"$CLEAN_URL\" };" > /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
-    chmod +x /docker-entrypoint.d/40-generate-config.sh
+COPY entrypoint.sh /docker-entrypoint.d/40-generate-config.sh
+RUN chmod +x /docker-entrypoint.d/40-generate-config.sh
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
