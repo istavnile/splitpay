@@ -6,19 +6,16 @@ import { createClient } from '@supabase/supabase-js';
 // --- DYNAMIC CONFIGURATION (Runtime or Build-time) ---
 // We check window.APP_CONFIG first (populated at runtime by Nginx/envsubst)
 // or fall back to process.env (populated at build-time by Expo/Build Args)
-const supabaseUrl = (window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG.SUPABASE_URL.trim() !== "") 
+const supabaseUrl = (window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG.SUPABASE_URL.trim() !== "" && window.APP_CONFIG.SUPABASE_URL !== "${EXPO_PUBLIC_SUPABASE_URL}") 
     ? window.APP_CONFIG.SUPABASE_URL 
-    : process.env.EXPO_PUBLIC_SUPABASE_URL;
+    : (typeof window !== 'undefined' ? window.location.origin : process.env.EXPO_PUBLIC_SUPABASE_URL);
 
-const supabaseAnonKey = (window.APP_CONFIG?.SUPABASE_ANON_KEY && window.APP_CONFIG.SUPABASE_ANON_KEY.trim() !== "") 
+const supabaseAnonKey = (window.APP_CONFIG?.SUPABASE_ANON_KEY && window.APP_CONFIG.SUPABASE_ANON_KEY.trim() !== "" && window.APP_CONFIG.SUPABASE_ANON_KEY !== "${EXPO_PUBLIC_SUPABASE_ANON_KEY}") 
     ? window.APP_CONFIG.SUPABASE_ANON_KEY 
     : process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === "MISSING_URL") {
     console.error("❌ CRITICAL: Missing Supabase Configuration!");
-    if (typeof window !== 'undefined') {
-        alert("⚠️ Configuración de Supabase faltante. Revisa tus variables de entorno en el VPS.\nURL: " + supabaseUrl);
-    }
 }
 
 // Fallback to empty strings if missing to avoid breaking imports
