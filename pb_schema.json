@@ -1,160 +1,49 @@
 [
   {
+    "id": "events0000000001",
     "name": "events",
     "type": "base",
-    "system": false,
     "schema": [
-      {
-        "name": "nombre_evento",
-        "type": "text",
-        "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
-      },
-      {
-        "name": "creado_por",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "_pb_users_auth_",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      }
+      { "name": "nombre_evento", "type": "text", "required": true },
+      { "name": "creado_por", "type": "relation", "required": true, "options": { "collectionId": "_pb_users_auth_", "maxSelect": 1 } }
     ],
-    "listRule": "@request.auth.id != \"\"",
-    "viewRule": "@request.auth.id != \"\"",
-    "createRule": "@request.auth.id != \"\"",
-    "updateRule": "creado_por = @request.auth.id",
-    "deleteRule": "creado_por = @request.auth.id"
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
   },
   {
+    "id": "participants001",
     "name": "participants",
     "type": "base",
-    "system": false,
     "schema": [
-      {
-        "name": "nombre",
-        "type": "text",
-        "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
-      },
-      {
-        "name": "id_evento",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "events",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      },
-      {
-        "name": "creado_por",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "_pb_users_auth_",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      }
+      { "name": "nombre", "type": "text", "required": true },
+      { "name": "id_evento", "type": "relation", "required": true, "options": { "collectionId": "events0000000001", "cascadeDelete": true, "maxSelect": 1 } },
+      { "name": "creado_por", "type": "relation", "required": true, "options": { "collectionId": "_pb_users_auth_", "maxSelect": 1 } }
     ],
-    "listRule": "@request.auth.id != \"\"",
-    "viewRule": "@request.auth.id != \"\"",
-    "createRule": "@request.auth.id != \"\"",
-    "updateRule": "creado_por = @request.auth.id",
-    "deleteRule": "creado_por = @request.auth.id"
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
   },
   {
+    "id": "expenses0000001",
     "name": "expenses",
     "type": "base",
-    "system": false,
     "schema": [
-      {
-        "name": "descripcion",
-        "type": "text",
-        "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
-      },
-      {
-        "name": "monto",
-        "type": "number",
-        "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "noDecimal": false
-        }
-      },
-      {
-        "name": "pagado_por",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "participants",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      },
-      {
-        "name": "id_evento",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "events",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      },
-      {
-        "name": "estado",
-        "type": "text",
-        "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
-      },
-      {
-        "name": "creado_por",
-        "type": "relation",
-        "required": true,
-        "options": {
-          "collectionId": "_pb_users_auth_",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1,
-          "displayFields": null
-        }
-      }
+      { "name": "descripcion", "type": "text", "required": true },
+      { "name": "monto", "type": "number", "required": true },
+      { "name": "pagado_por", "type": "relation", "required": true, "options": { "collectionId": "participants001", "maxSelect": 1 } },
+      { "name": "id_evento", "type": "relation", "required": true, "options": { "collectionId": "events0000000001", "cascadeDelete": true, "maxSelect": 1 } },
+      { "name": "estado", "type": "text" },
+      { "name": "creado_por", "type": "relation", "required": true, "options": { "collectionId": "_pb_users_auth_", "maxSelect": 1 } }
     ],
-    "listRule": "@request.auth.id != \"\"",
-    "viewRule": "@request.auth.id != \"\"",
-    "createRule": "@request.auth.id != \"\"",
-    "updateRule": "creado_por = @request.auth.id",
-    "deleteRule": "creado_por = @request.auth.id"
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
   }
 ]
