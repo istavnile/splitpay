@@ -1,0 +1,160 @@
+[
+  {
+    "name": "events",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "nombre_evento",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "creado_por",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "creado_por = @request.auth.id",
+    "deleteRule": "creado_por = @request.auth.id"
+  },
+  {
+    "name": "participants",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "nombre",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "id_evento",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "events",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "name": "creado_por",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "creado_por = @request.auth.id",
+    "deleteRule": "creado_por = @request.auth.id"
+  },
+  {
+    "name": "expenses",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "descripcion",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "monto",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "name": "pagado_por",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "participants",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "name": "id_evento",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "events",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "name": "estado",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "creado_por",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "creado_por = @request.auth.id",
+    "deleteRule": "creado_por = @request.auth.id"
+  }
+]
