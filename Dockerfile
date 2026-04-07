@@ -24,9 +24,9 @@ ENV EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
 # Build the Expo web application
 RUN npx expo export -p web
 
-# Ensure PWA assets from public/ are in the dist folder
-# Some Expo versions don't copy these automatically in certain environments
-RUN cp -r public/* dist/ || true
+# Expo 50+ automatically copies public/ to dist/ during export.
+# We remove the manual copy to avoid overwriting the processed index.html.
+# RUN cp -r public/* dist/ || true
 
 # ==========================================
 # STAGE 2: Serve with NGINX
