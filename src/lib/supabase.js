@@ -46,13 +46,11 @@ export const supabase = createClient(supabaseUrl || "MISSING_URL", supabaseAnonK
  */
 export const checkSupabaseConnection = async () => {
     try {
-        const { data, error } = await supabase.from('_non_existent_table_').select('*').limit(1);
-        // If we get an error that is NOT a network error (e.g. 401, 404, or regular Supabase error), 
-        // it means we ARE connected but just hit a permissions or table issue.
-        // A "Failed to fetch" usually indicates a network/connectivity issue.
-        if (error && (error.message.includes("fetch") || error.message.includes("network"))) {
-            return { ok: false, error: error.message };
-        }
+        // Use a simple fetch to the URL root to check if the host is reachable
+        // without triggering "table not found" errors in the console.
+        const response = await fetch(supabaseUrl, { method: 'GET', mode: 'no-cors' });
+        // 'no-cors' will return an opaque response even if the server doesn't allow CORS on the root,
+        // which is enough to prove the DNS and network path are OK.
         return { ok: true };
     } catch (err) {
         return { ok: false, error: err.message };
