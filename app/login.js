@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform, Modal } from 'react-native';
-import { supabase } from '../src/lib/supabase';
+import { supabase, checkSupabaseConnection } from '../src/lib/supabase';
 import { useAuth } from '../src/providers/AuthProvider';
 import { useRouter } from 'expo-router';
 import AdContainer from './components/AdContainer';
+import { useEffect } from 'react';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -14,6 +15,22 @@ export default function LoginScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
+    const [connectionStatus, setConnectionStatus] = useState('checking'); // 'checking', 'ok', 'error'
+    const [connectionError, setConnectionError] = useState(null);
+
+    useEffect(() => {
+        const checkConn = async () => {
+            const result = await checkSupabaseConnection();
+            if (result.ok) {
+                setConnectionStatus('ok');
+            } else {
+                setConnectionStatus('error');
+                setConnectionError(result.error);
+                console.error("❌ Supabase Connection Error:", result.error);
+            }
+        };
+        checkConn();
+    }, []);
 
     const { enterGuestMode } = useAuth();
     const router = useRouter();
@@ -38,8 +55,9 @@ export default function LoginScreen() {
         setLoading(false);
 
         if (error) {
+            console.error("❌ Login Error Detail:", error);
             // Supabase returns generic error or specific text, we translate loosely or show it
-            showModal('Error al iniciar sesión', error.message);
+            showModal('Error al iniciar sesión', error.message + (error.status ? ` (Status: ${error.status})` : ''));
         } else {
             router.replace('/(app)');
         }
@@ -59,7 +77,8 @@ export default function LoginScreen() {
         setLoading(false);
 
         if (error) {
-            showModal('Error de registro', error.message);
+            console.error("❌ Registration Error Detail:", error);
+            showModal('Error de registro', error.message + (error.status ? ` (Status: ${error.status})` : ''));
         } else {
             showModal('Registro exitoso', '¡Revisa tu correo para verificar tu cuenta o inicia sesión ahora mismo!');
         }
@@ -168,6 +187,19 @@ export default function LoginScreen() {
                                     <TouchableOpacity onPress={handleForgotPassword} className="mt-5 items-center">
                                         <Text className="text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors">¿Olvidaste tu contraseña?</Text>
                                     </TouchableOpacity>
+
+                                    {/* Connectivity Indicator */}
+                                    <View className="mt-4 flex-row items-center justify-center border-t border-gray-800 pt-4">
+                                        <View className={`w-2 h-2 rounded-full mr-2 ${connectionStatus === 'ok' ? 'bg-emerald-500' : connectionStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                                        <Text className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                            {connectionStatus === 'ok' ? 'SISTEMA ONLINE' : connectionStatus === 'error' ? 'ERROR DE CONEXIÓN' : 'VERIFICANDO SISTEMA...'}
+                                        </Text>
+                                        {connectionStatus === 'error' && (
+                                            <TouchableOpacity onPress={() => showModal('Detalle de Conexión', connectionError || 'No se pudo conectar con el servidor de base de datos.')}>
+                                                <Text className="ml-2 text-[10px] text-emerald-400 underline font-bold">VER INFO</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
                                 </View>
                             )}
                         </View>
