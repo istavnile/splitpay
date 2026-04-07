@@ -17,6 +17,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Fix permissions and expose
+COPY entrypoint.sh /docker-entrypoint.d/40-generate-config.sh
 RUN chmod +x /docker-entrypoint.d/40-generate-config.sh
 
 EXPOSE 80
