@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - POCKETBASE_URL=https://splitpay.istavnile.cloud # Update to your production URL
+    depends_on:
+      - pocketbase
+    restart: always
+
+  pocketbase:
+    image: muchobien/pocketbase:latest
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+    restart: always

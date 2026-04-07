@@ -1,10 +1,19 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}", "./app/**/*.{js,jsx,ts,tsx}"],
-  presets: [require("nativewind/preset")],
-  darkMode: "class",
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        emerald: {
+          500: '#10b981',
+          600: '#059669',
+        },
+      },
+    },
   },
   plugins: [],
 }

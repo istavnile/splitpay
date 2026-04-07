@@ -11,9 +11,10 @@ export function calculateBalance(gastosActivos, participantesIds, perfiles) {
 
     // Sum expenses
     gastosActivos.forEach(g => {
-        if (tot[g.pagado_por] !== undefined) {
+        const pagadorId = typeof g.pagado_por === 'object' ? g.pagado_por.id : g.pagado_por;
+        if (tot[pagadorId] !== undefined) {
             const amount = Number(g.monto);
-            tot[g.pagado_por] += amount;
+            tot[pagadorId] += amount;
             tGen += amount;
         }
     });
