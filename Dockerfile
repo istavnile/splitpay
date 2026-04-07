@@ -16,9 +16,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Add a script to inject environment variables at runtime into config.js
-COPY entrypoint.sh /docker-entrypoint.d/40-generate-config.sh
+# Fix permissions and expose
 RUN chmod +x /docker-entrypoint.d/40-generate-config.sh
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "/docker-entrypoint.d/40-generate-config.sh && nginx -g 'daemon off;'"]
