@@ -45,9 +45,15 @@ RUN apk add --no-cache gettext
 # Copy the built Expo Web static files from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80 (This is the port easy panel will bind to)
+# Expose port 80
 EXPOSE 80
 
-# Start NGINX with dynamic environment variable injection
-# This creates config.js from the template before starting Nginx
-CMD ["/bin/sh", "-c", "envsubst < /usr/share/nginx/html/config-template.js > /usr/share/nginx/html/config.js && echo '✅ Dynamic config.js generated' && exec nginx -g 'daemon off;'"]
+# Create a custom entrypoint script to generate config.js at runtime
+# This is more robust than using CMD as it works even if CMD is overridden
+RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'envsubst < /usr/share/nginx/html/config-template.js > /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "✅ Dynamic config.js generated"' >> /docker-entrypoint.d/40-generate-config.sh && \
+    chmod +x /docker-entrypoint.d/40-generate-config.sh
+
+# Start NGINX
+CMD ["nginx", "-g", "daemon off;"]
