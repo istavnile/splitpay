@@ -12,7 +12,7 @@ services:
     restart: always
 
   pocketbase:
-    image: muchobien/pocketbase:latest
+    image: ghcr.io/muchobien/pocketbase:latest
     ports:
       - "8090:8090"
     volumes:
