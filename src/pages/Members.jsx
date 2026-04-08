@@ -50,12 +50,13 @@ export default function Members() {
         filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || ')
       });
 
-      // 4. Unique by name or userId
+      // 4. Unique by name or userId or email
       const uniqueMap = {};
       participants.forEach(p => {
         const key = p.id_usuario || p.nombre.toLowerCase().trim();
         const existingInv = invs.find(i => 
           (p.id_usuario && i.id_usuario === p.id_usuario) || 
+          (i.email && i.email.toLowerCase().trim() === p.email?.toLowerCase().trim()) ||
           (i.email && i.email.split('@')[0].toLowerCase() === p.nombre.toLowerCase().trim())
         );
         
@@ -63,14 +64,16 @@ export default function Members() {
           uniqueMap[key] = {
             id: p.id,
             nombre: p.nombre,
-            email: p.expand?.id_usuario?.email || existingInv?.email || '',
+            email: p.email || p.expand?.id_usuario?.email || existingInv?.email || '',
             isUser: !!p.id_usuario,
             userId: p.id_usuario,
             eventId: p.id_evento,
-            allPIds: [p.id] // Keep track of all participant IDs for this person
+            allPIds: [p.id] 
           };
         } else {
           uniqueMap[key].allPIds.push(p.id);
+          // If we find an email in one of the alternative records, use it
+          if (!uniqueMap[key].email && p.email) uniqueMap[key].email = p.email;
         }
       });
 
@@ -87,20 +90,28 @@ export default function Members() {
     if (!editingContact) return;
     setInviting(true);
     try {
-      // 1. Update name if changed (for all local instances)
-      if (editingName !== editingContact.nombre) {
+      // 1. Update name and email in ALL matching participant records
+      const updateData = {};
+      if (editingName !== editingContact.nombre) updateData.nombre = editingName;
+      if (inviteEmail !== editingContact.email) updateData.email = inviteEmail.toLowerCase().trim();
+
+      if (Object.keys(updateData).length > 0) {
         for (const pId of editingContact.allPIds) {
-          await pb.collection('participants').update(pId, { nombre: editingName });
+          await pb.collection('participants').update(pId, updateData);
         }
       }
 
-      // 2. Link email if provided and changed
+      // 2. Also keep the members record for compatibility/invitations if email changed
       if (inviteEmail && inviteEmail !== editingContact.email) {
-        await pb.collection('members').create({
-          id_evento: editingContact.eventId,
-          email: inviteEmail.toLowerCase().trim(),
-          rol: 'editor'
-        });
+        try {
+          await pb.collection('members').create({
+            id_evento: editingContact.eventId,
+            email: inviteEmail.toLowerCase().trim(),
+            rol: 'editor'
+          });
+        } catch (mErr) {
+          console.warn('Could not create member record (might already exist):', mErr);
+        }
       }
       
       setStatus({

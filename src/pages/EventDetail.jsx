@@ -128,6 +128,7 @@ export default function EventDetail() {
       await pb.collection('participants').create({
         id_evento: id,
         nombre: nameFromEmail,
+        email: inviteEmail.toLowerCase().trim(),
         creado_por: user.id
       });
 

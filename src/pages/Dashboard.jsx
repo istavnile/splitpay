@@ -140,6 +140,7 @@ export default function Dashboard() {
         id_evento: record.id,
         nombre: user.name || user.email.split('@')[0],
         id_usuario: user.id,
+        email: user.email,
         creado_por: user.id
       });
 
