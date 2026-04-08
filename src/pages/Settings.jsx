@@ -62,7 +62,16 @@ export default function Settings() {
         data.append('avatar', avatarFile);
       }
 
-      await pb.collection('users').update(user.id, data);
+      // Use plain object if no file is being uploaded for improved reliability
+      const updateData = avatarFile 
+        ? data 
+        : {
+            name: formData.name,
+            moneda_preferida: formData.moneda_preferida
+          };
+
+      await pb.collection('users').update(user.id, updateData);
+      console.log('User updated with moneda:', formData.moneda_preferida);
       await refresh();
       setStatus({
         isOpen: true,

@@ -6,13 +6,15 @@ import { Calendar, ChevronRight, TrendingUp, Users, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom';
 
 export default function Events() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.id) fetchEvents();
-  }, [user?.id]);
+    if (!authLoading && user?.id) {
+       fetchEvents();
+    }
+  }, [user?.id, authLoading]);
 
   const fetchEvents = async () => {
     try {
@@ -32,7 +34,7 @@ export default function Events() {
           .map(m => m.expand.id_evento);
       } catch (err) {}
 
-      console.log(`Fetch: ${ownedRecords.length} owned, ${sharedRecords.length} shared`);
+      console.log(`Events page: ${ownedRecords.length} owned, ${sharedRecords.length} shared`);
       setEvents([...ownedRecords, ...sharedRecords]);
     } catch (err) {
       console.error('Error fetching events:', err);
