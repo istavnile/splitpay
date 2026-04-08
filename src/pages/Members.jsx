@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Check, ArrowRight, Trash2 } from 'lucide-react';
-import { Card, Button, Input } from '../components/UI';
+import { Card, Button, Input, StatusModal } from '../components/UI';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,6 +14,7 @@ export default function Members() {
   const [inviting, setInviting] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newContact, setNewContact] = useState({ nombre: '', email: '' });
+  const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
     fetchMembers();
@@ -85,12 +86,22 @@ export default function Members() {
         rol: 'editor'
       });
       
-      alert(`Invitación vinculada y enviada a ${inviteEmail}`);
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: 'Invitación Enviada',
+        message: `Se ha vinculado y enviado una invitación a ${inviteEmail}`
+      });
       setEditingContact(null);
       setInviteEmail('');
       fetchMembers();
     } catch (err) {
-      alert('Error: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error al Invitar',
+        message: err.message
+      });
     } finally {
       setInviting(false);
     }
@@ -311,6 +322,13 @@ export default function Members() {
         </div>
       )}
 
+      <StatusModal 
+        isOpen={status.isOpen} 
+        onClose={() => setStatus({...status, isOpen: false})} 
+        type={status.type}
+        title={status.title}
+        message={status.message}
+      />
     </div>
   );
 }

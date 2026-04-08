@@ -11,8 +11,8 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (user?.id) fetchEvents();
+  }, [user?.id]);
 
   const fetchEvents = async () => {
     try {

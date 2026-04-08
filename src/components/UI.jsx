@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check, X, Shield } from 'lucide-react';
 
 export const Button = ({ children, className = '', variant = 'primary', ...props }) => {
   const variants = {
@@ -84,6 +85,25 @@ export const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message, type
             Cancelar
           </Button>
         </div>
+      </div>
+    </Modal>
+  );
+};
+export const StatusModal = ({ isOpen, onClose, title, message, type = 'success' }) => {
+  const icons = {
+    success: <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6"><Check size={32} /></div>,
+    error: <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 mb-6"><X size={32} /></div>,
+    info: <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 mb-6"><Shield size={32} /></div>,
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+      <div className="flex flex-col items-center text-center">
+        {icons[type]}
+        <p className="text-slate-500 dark:text-gray-400 font-bold leading-relaxed mb-8">{message}</p>
+        <Button className="w-full py-4 h-auto rounded-2xl font-black uppercase tracking-widest text-xs" onClick={onClose}>
+          Entendido
+        </Button>
       </div>
     </Modal>
   );

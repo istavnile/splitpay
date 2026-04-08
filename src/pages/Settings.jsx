@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
-import { Button, Card, Input } from '../components/UI';
-import { User, Camera, Lock, Mail, Shield, Smartphone, Globe, Bell } from 'lucide-react';
+import { Button, Card, Input, StatusModal } from '../components/UI';
+import { User, Camera, Lock, Mail, Shield, Smartphone, Globe, Bell, Check, X } from 'lucide-react';
 
 export default function Settings() {
   const { user, refresh } = useAuth();
@@ -19,6 +19,19 @@ export default function Settings() {
     new: '',
     confirm: '',
   });
+  const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+
+  // Sync with user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        username: user.username || '',
+        email: user.email || '',
+        moneda_preferida: user.moneda_preferida || '$',
+      });
+    }
+  }, [user]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
@@ -43,9 +56,19 @@ export default function Settings() {
 
       await pb.collection('users').update(user.id, data);
       await refresh();
-      alert('Perfil actualizado con éxito');
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: '¡Efectuado!',
+        message: 'Tu perfil y preferencias se han actualizado correctamente.'
+      });
     } catch (err) {
-      alert('Error: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Guardado',
+        message: 'No pudimos actualizar tu perfil: ' + err.message
+      });
     } finally {
       setLoading(false);
     }
@@ -61,10 +84,20 @@ export default function Settings() {
         passwordConfirm: passwords.confirm,
         oldPassword: passwords.old,
       });
-      alert('Contraseña cambiada con éxito');
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: 'Contraseña Actualizada',
+        message: 'Tu seguridad es nuestra prioridad. Contraseña cambiada con éxito.'
+      });
       setPasswords({ old: '', new: '', confirm: '' });
     } catch (err) {
-      alert('Error: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Seguridad',
+        message: 'No se pudo cambiar la contraseña: ' + err.message
+      });
     } finally {
       setLoading(false);
     }
@@ -224,6 +257,13 @@ export default function Settings() {
         </section>
 
       </div>
+      <StatusModal 
+        isOpen={status.isOpen} 
+        onClose={() => setStatus({...status, isOpen: false})} 
+        type={status.type}
+        title={status.title}
+        message={status.message}
+      />
     </div>
   );
 }

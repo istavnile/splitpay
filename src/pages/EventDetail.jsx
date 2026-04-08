@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input, ConfirmDialog } from '../components/UI';
+import { Card, Button, Input, ConfirmDialog, StatusModal } from '../components/UI';
 import { calculateBalance } from '../utils/balanceEngine';
 import { 
   ArrowLeft, Plus, UserPlus, Share2, Trash2, 
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
-  Copy, Mail, ChevronRight, X, AlertCircle, Users, TrendingUp, Settings, Calendar
+  Copy, Mail, ChevronRight, X, AlertCircle, Users, TrendingUp, Settings, Calendar,
+  Check
 } from 'lucide-react';
 
 export default function EventDetail() {
@@ -32,6 +33,7 @@ export default function EventDetail() {
   const [balance, setBalance] = useState({ transferencias: [], summary: [], text: '', total: 0 });
   const [copied, setCopied] = useState(false);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
+  const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
     fetchData();
@@ -90,11 +92,22 @@ export default function EventDetail() {
         estado: 'activo',
       };
       const record = await pb.collection('expenses').create(data, { expand: 'pagado_por' });
-      setExpenses([record, ...expenses]);
-      setDescription('');
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: '¡Gasto Registrado!',
+        message: `Se ha registrado "${description}" por ${moneda}${parseFloat(amount).toFixed(2)} correctamente.`
+      });
       setAmount('');
+      setDescription('');
+      fetchData();
     } catch (err) {
-      alert('Error: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Guardado',
+        message: 'No pudimos registrar el gasto: ' + err.message
+      });
     } finally {
       setAddingExpense(false);
     }
@@ -118,12 +131,22 @@ export default function EventDetail() {
         creado_por: user.id
       });
 
-      alert(`Invitación enviada a ${inviteEmail}`);
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: 'Invitación Enviada',
+        message: `Se ha invitado a ${inviteEmail} a colaborar en este evento.`
+      });
       setInviteEmail('');
       setModals({ ...modals, invite: false });
       fetchData();
     } catch (err) {
-      alert('Error al invitar: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error al Invitar',
+        message: err.message
+      });
     } finally {
       setInviting(false);
     }
@@ -134,7 +157,12 @@ export default function EventDetail() {
       await pb.collection('expenses').delete(expId);
       setExpenses(expenses.filter(e => e.id !== expId));
     } catch (err) {
-      alert('Error al borrar: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error al Borrar',
+        message: err.message
+      });
     }
   };
 
@@ -143,7 +171,12 @@ export default function EventDetail() {
       await pb.collection('participants').delete(pId);
       setParticipants(participants.filter(p => p.id !== pId));
     } catch (err) {
-      alert('Error: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Gestión',
+        message: 'No se pudo eliminar al participante: ' + err.message
+      });
     }
   };
 
@@ -208,13 +241,13 @@ export default function EventDetail() {
                     <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/10 shrink-0 h-11 self-center">
                        <button 
                          onClick={() => toggleCurrency('$')}
-                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === '$' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
+                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === '$' ? 'bg-white text-emerald-900 shadow-lg' : 'text-white hover:bg-white/10'}`}
                        >
                          $
                        </button>
                        <button 
                          onClick={() => toggleCurrency('S/.')}
-                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === 'S/.' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
+                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === 'S/.' ? 'bg-white text-emerald-900 shadow-lg' : 'text-white hover:bg-white/10'}`}
                        >
                          S/.
                        </button>
@@ -392,13 +425,13 @@ export default function EventDetail() {
                     </div>
                  </div>
                  
-                 <Button 
-                   type="submit" 
-                   disabled={addingExpense} 
-                   className="w-full py-5 h-auto rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 border-none font-black shadow-2xl shadow-emerald-950/30 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
-                 >
-                    {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
-                 </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={addingExpense} 
+                    className="w-full py-5 h-auto rounded-3xl bg-slate-900 text-white hover:bg-black border-none font-black shadow-2xl shadow-emerald-950/40 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
+                  >
+                     {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
+                  </Button>
               </form>
            </Card>
 
@@ -484,6 +517,20 @@ export default function EventDetail() {
         onConfirm={confirmState.onConfirm}
         title={confirmState.title}
         message={confirmState.message}
+      />
+      <StatusModal 
+        isOpen={status.isOpen} 
+        onClose={() => setStatus({...status, isOpen: false})} 
+        type={status.type}
+        title={status.title}
+        message={status.message}
+      />
+      <StatusModal 
+        isOpen={status.isOpen} 
+        onClose={() => setStatus({...status, isOpen: false})} 
+        type={status.type}
+        title={status.title}
+        message={status.message}
       />
     </div>
   );
