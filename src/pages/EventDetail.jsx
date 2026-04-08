@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input } from '../components/UI';
+import { Button, Card, Input, ConfirmDialog } from '../components/UI';
 import { calculateBalance } from '../utils/balanceEngine';
 import { 
   ArrowLeft, Plus, UserPlus, Share2, Trash2, 
@@ -31,6 +31,7 @@ export default function EventDetail() {
   const [modals, setModals] = useState({ invite: false, settings: false });
   const [balance, setBalance] = useState({ transferencias: [], summary: [], text: '', total: 0 });
   const [copied, setCopied] = useState(false);
+  const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     fetchData();
@@ -129,7 +130,6 @@ export default function EventDetail() {
   };
 
   const deleteExpense = async (expId) => {
-    if (!confirm('¿Borrar este gasto?')) return;
     try {
       await pb.collection('expenses').delete(expId);
       setExpenses(expenses.filter(e => e.id !== expId));
@@ -139,7 +139,6 @@ export default function EventDetail() {
   };
 
   const removeParticipant = async (pId) => {
-    if (!confirm('¿Quitar a este participante? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo.')) return;
     try {
       await pb.collection('participants').delete(pId);
       setParticipants(participants.filter(p => p.id !== pId));
@@ -286,7 +285,15 @@ export default function EventDetail() {
                         </div>
                         <div className="flex items-center gap-6 text-right">
                            <span className="text-2xl font-black dark:text-white tracking-tighter">{moneda}{exp.monto.toFixed(2)}</span>
-                           <button onClick={() => deleteExpense(exp.id)} className="p-3 opacity-0 group-hover:opacity-100 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all">
+                           <button 
+                             onClick={() => setConfirmState({ 
+                               open: true, 
+                               title: '¿Borrar Gasto?', 
+                               message: '¿Estás seguro de que deseas eliminar este gasto de la lista?',
+                               onConfirm: () => deleteExpense(exp.id)
+                             })} 
+                             className="p-3 opacity-0 group-hover:opacity-100 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all"
+                           >
                               <Trash2 size={18} />
                            </button>
                         </div>
@@ -310,7 +317,12 @@ export default function EventDetail() {
                          <span className="font-black dark:text-white text-sm">{p.nombre}</span>
                       </div>
                       <button 
-                        onClick={() => removeParticipant(p.id)}
+                        onClick={() => setConfirmState({ 
+                          open: true, 
+                          title: '¿Quitar Participante?', 
+                          message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
+                          onConfirm: () => removeParticipant(p.id)
+                        })}
                         className="p-2 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                       >
                          <Trash2 size={16} />
@@ -461,6 +473,14 @@ export default function EventDetail() {
           </Card>
         </div>
       )}
+      {/* Confirmation Dialog */}
+      <ConfirmDialog 
+        isOpen={confirmState.open}
+        onClose={() => setConfirmState({ ...confirmState, open: false })}
+        onConfirm={confirmState.onConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+      />
     </div>
   );
 }

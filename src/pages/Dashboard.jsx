@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input } from '../components/UI';
+import { Button, Card, Input, ConfirmDialog } from '../components/UI';
 import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [showArchived, setShowArchived] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -149,13 +150,10 @@ export default function Dashboard() {
     }
   };
 
-  const deleteEvent = async (e, eventId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm('¿Borrar este evento y todos sus gastos?')) return;
+  const deleteEvent = async () => {
     try {
-      await pb.collection('events').delete(eventId);
-      setEvents(events.filter(ev => ev.id !== eventId));
+      await pb.collection('events').delete(confirmDelete.id);
+      setEvents(events.filter(ev => ev.id !== confirmDelete.id));
     } catch (err) {
       alert('Error: ' + err.message);
     }
@@ -260,7 +258,7 @@ export default function Dashboard() {
                         <AlertCircle size={18} />
                      </button>
                      <button 
-                       onClick={(e) => deleteEvent(e, event.id)}
+                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDelete({ open: true, id: event.id }); }}
                        className="w-10 h-10 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
                        title="Eliminar"
                      >
@@ -331,6 +329,14 @@ export default function Dashboard() {
           </Card>
         </div>
       )}
+      {/* Delete Confirmation */}
+      <ConfirmDialog 
+        isOpen={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, id: null })}
+        onConfirm={deleteEvent}
+        title="¿Eliminar Evento?"
+        message="¿Estás seguro de que deseas borrar este evento y todos sus gastos asociados? Esta acción no se puede deshacer."
+      />
     </div>
   );
 }
