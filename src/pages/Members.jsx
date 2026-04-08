@@ -11,6 +11,7 @@ export default function Members() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingContact, setEditingContact] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [editingName, setEditingName] = useState('');
   const [inviting, setInviting] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newContact, setNewContact] = useState({ nombre: '', email: '' });
@@ -49,21 +50,27 @@ export default function Members() {
         filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || ')
       });
 
-      // 4. Unique by name
+      // 4. Unique by name or userId
       const uniqueMap = {};
       participants.forEach(p => {
-        const key = p.nombre.toLowerCase().trim();
-        const existingInv = invs.find(i => i.email.split('@')[0].toLowerCase() === key || i.id_usuario === p.id_usuario);
+        const key = p.id_usuario || p.nombre.toLowerCase().trim();
+        const existingInv = invs.find(i => 
+          (p.id_usuario && i.id_usuario === p.id_usuario) || 
+          (i.email && i.email.split('@')[0].toLowerCase() === p.nombre.toLowerCase().trim())
+        );
         
-        if (!uniqueMap[key] || p.id_usuario) {
+        if (!uniqueMap[key] || (p.id_usuario && !uniqueMap[key].isUser)) {
           uniqueMap[key] = {
             id: p.id,
             nombre: p.nombre,
-            email: existingInv?.email || '',
+            email: p.expand?.id_usuario?.email || existingInv?.email || '',
             isUser: !!p.id_usuario,
             userId: p.id_usuario,
-            eventId: p.id_evento // Just for reference
+            eventId: p.id_evento,
+            allPIds: [p.id] // Keep track of all participant IDs for this person
           };
+        } else {
+          uniqueMap[key].allPIds.push(p.id);
         }
       });
 
@@ -77,29 +84,40 @@ export default function Members() {
 
   const handleUpdateContact = async (e) => {
     e.preventDefault();
-    if (!inviteEmail || !editingContact) return;
+    if (!editingContact) return;
     setInviting(true);
     try {
-      await pb.collection('members').create({
-        id_evento: editingContact.eventId,
-        email: inviteEmail.toLowerCase().trim(),
-        rol: 'editor'
-      });
+      // 1. Update name if changed (for all local instances)
+      if (editingName !== editingContact.nombre) {
+        for (const pId of editingContact.allPIds) {
+          await pb.collection('participants').update(pId, { nombre: editingName });
+        }
+      }
+
+      // 2. Link email if provided and changed
+      if (inviteEmail && inviteEmail !== editingContact.email) {
+        await pb.collection('members').create({
+          id_evento: editingContact.eventId,
+          email: inviteEmail.toLowerCase().trim(),
+          rol: 'editor'
+        });
+      }
       
       setStatus({
         isOpen: true,
         type: 'success',
-        title: 'Invitación Enviada',
-        message: `Se ha vinculado y enviado una invitación a ${inviteEmail}`
+        title: 'Contacto Actualizado',
+        message: 'Los cambios se han guardado correctamente.'
       });
       setEditingContact(null);
       setInviteEmail('');
+      setEditingName('');
       fetchMembers();
     } catch (err) {
       setStatus({
         isOpen: true,
         type: 'error',
-        title: 'Error al Invitar',
+        title: 'Error al actualizar',
         message: err.message
       });
     } finally {
@@ -198,7 +216,11 @@ export default function Members() {
                        {member.email || 'Sin correo'}
                     </span>
                     <button
-                      onClick={() => { setEditingContact(member); setInviteEmail(member.email); }}
+                      onClick={() => { 
+                        setEditingContact(member); 
+                        setInviteEmail(member.email || '');
+                        setEditingName(member.nombre);
+                      }}
                       className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm shrink-0"
                     >
                        <Mail size={14} />
@@ -232,29 +254,37 @@ export default function Members() {
           <Card className="max-w-md w-full animate-in zoom-in-95 duration-200 p-10 border-none shadow-2xl rounded-[3rem]" hover={false}>
              <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black flex items-center gap-3 dark:text-white tracking-tight leading-none uppercase">
-                  <Mail className="text-indigo-500" size={32} /> Vincular Correo
+                  <Mail className="text-indigo-500" size={32} /> Editar Contacto
                 </h2>
                 <button onClick={() => setEditingContact(null)} className="text-slate-400 hover:text-rose-500 transition-colors">
                    <X size={28} />
                 </button>
              </div>
              <p className="text-sm text-slate-500 dark:text-gray-400 mb-10 leading-relaxed font-bold">
-                Asocia un correo a <span className="text-indigo-500">{editingContact.nombre}</span> para invitarle a SplitPay y compartir balances automáticamente.
+                Actualiza la información de <span className="text-indigo-500">{editingContact.nombre}</span>. Los cambios de nombre se aplicarán a todos los eventos compartidos.
              </p>
-             <form onSubmit={handleUpdateContact} className="space-y-8">
+             <form onSubmit={handleUpdateContact} className="space-y-6">
+                <Input 
+                  label="Nombre" 
+                  type="text"
+                  placeholder="Nombre del contacto" 
+                  value={editingName}
+                  onChange={e => setEditingName(e.target.value)}
+                  disabled={editingContact.isUser}
+                  className="bg-slate-50 dark:bg-gray-800 border-none h-14 px-6 rounded-2xl font-bold"
+                />
                 <Input 
                   label="Correo Electrónico" 
                   type="email"
                   placeholder="ejemplo@email.com" 
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
-                  autoFocus
-                  required
+                  disabled={editingContact.isUser}
                   className="bg-slate-50 dark:bg-gray-800 border-none h-14 px-6 rounded-2xl font-bold"
                 />
                 <div className="flex flex-col gap-3 pt-4">
                    <Button className="py-5 h-auto rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 uppercase tracking-widest text-xs" type="submit" disabled={inviting}>
-                      {inviting ? 'Procesando...' : 'Vincular e Invitar'}
+                      {inviting ? 'Guardando...' : 'Guardar Cambios'}
                    </Button>
                    <Button variant="ghost" className="py-5 h-auto rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-400" onClick={() => setEditingContact(null)} type="button">
                       Cerrar

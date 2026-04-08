@@ -139,6 +139,7 @@ export default function Dashboard() {
       await pb.collection('participants').create({
         id_evento: record.id,
         nombre: user.name || user.email.split('@')[0],
+        id_usuario: user.id,
         creado_por: user.id
       });
 
