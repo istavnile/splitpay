@@ -198,7 +198,7 @@ export default function Settings() {
                       </div>
                    </div>
                 </div>
-                <Input label="Email Address" value={formData.email} disabled className="opacity-60 cursor-not-allowed" />
+                <Input label="Email Address" value={formData.email} disabled wrapperClassName="opacity-60" className="cursor-not-allowed" />
 
                 <div className="pt-4">
                    <Button type="submit" disabled={loading} className="w-full sm:w-auto px-8 py-4 rounded-2xl shadow-xl shadow-emerald-500/20">

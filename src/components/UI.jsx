@@ -19,12 +19,12 @@ export const Button = ({ children, className = '', variant = 'primary', ...props
   );
 };
 
-export const Input = ({ label, error, className = '', ...props }) => {
+export const Input = ({ label, error, className = '', wrapperClassName = '', ...props }) => {
   return (
-    <div className={`flex flex-col gap-1.5 w-full ${className}`}>
+    <div className={`flex flex-col gap-1.5 w-full ${wrapperClassName}`}>
       {label && <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1">{label}</label>}
       <input
-        className={`bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${error ? 'border-rose-500 ring-rose-500/20' : ''}`}
+        className={`w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${error ? 'border-rose-500 ring-rose-500/20' : ''} ${className}`}
         {...props}
       />
       {error && <span className="text-[10px] text-rose-500 font-bold ml-1 uppercase">{error}</span>}

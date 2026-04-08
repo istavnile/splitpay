@@ -6,16 +6,17 @@ import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp,
 import { useNavigate, Link } from 'react-router-dom';
 
 const SummaryCard = ({ title, value, icon: Icon, color, onClick }) => (
-  <Card 
-    className={`flex flex-col gap-2 border-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-md cursor-pointer group active:scale-95 transition-all`} 
+  <Card
+    className={`flex flex-col gap-1 md:gap-2 border-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-md cursor-pointer group active:scale-95 transition-all p-4 md:p-6`}
     hover={true}
     onClick={onClick}
   >
-    <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center text-white mb-2 shadow-lg shadow-emerald-500/10 group-hover:scale-110 transition-transform`}>
-      <Icon size={20} />
+    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl ${color} flex items-center justify-center text-white mb-1 md:mb-2 shadow-lg shadow-emerald-500/10 group-hover:scale-110 transition-transform`}>
+      <Icon size={16} className="md:hidden" />
+      <Icon size={20} className="hidden md:block" />
     </div>
-    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">{title}</span>
-    <span className="text-2xl font-black dark:text-white tracking-tight">{value}</span>
+    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">{title}</span>
+    <span className="text-lg md:text-2xl font-black dark:text-white tracking-tight">{value}</span>
   </Card>
 );
 
@@ -188,20 +189,20 @@ export default function Dashboard() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      <div className="flex flex-row items-center justify-between gap-4 mb-6 md:mb-10">
         <div>
-           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500 mb-2 block">Panel de Control</span>
-           <h2 className="text-4xl font-black dark:text-white tracking-tight">Hola, {user.name || 'Usuario'}</h2>
-           <p className="text-slate-500 dark:text-gray-400 mt-2">
-             {loading ? 'Calculando universo...' : `Tienes ${events.length} eventos activos este mes.`}
+           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500 mb-1 block">Panel de Control</span>
+           <h2 className="text-2xl md:text-4xl font-black dark:text-white tracking-tight">Hola, {user.name || 'Usuario'}</h2>
+           <p className="text-slate-500 dark:text-gray-400 mt-1 text-sm hidden sm:block">
+             {loading ? 'Calculando...' : `Tienes ${events.length} eventos activos este mes.`}
            </p>
         </div>
-        <Button onClick={() => setModalVisible(true)} className="px-6 py-6 rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-105 transition-transform">
-          <Plus size={20} /> <span className="font-bold">Nuevo Evento</span>
+        <Button onClick={() => setModalVisible(true)} className="px-4 md:px-6 py-3 md:py-6 rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-105 transition-transform shrink-0">
+          <Plus size={18} /> <span className="font-bold text-sm md:text-base">Nuevo Evento</span>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-12">
          <SummaryCard title="Gasto Total" value={stats.total} icon={Wallet} color="bg-emerald-500" onClick={() => navigate('/activity')} />
          <SummaryCard title="Tu Balance" value={stats.balance} icon={TrendingUp} color="bg-blue-500" onClick={() => navigate('/')} />
          <SummaryCard title="Miembros" value={stats.members} icon={Users} color="bg-indigo-500" onClick={() => navigate('/members')} />
@@ -239,40 +240,40 @@ export default function Dashboard() {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {filteredEvents.map((event, index) => (
-            <Link 
-              key={event.id} 
+            <Link
+              key={event.id}
               to={`/event/${event.id}`}
-              className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
+              className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2rem] md:rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
-              <div className={`h-28 bg-gradient-to-br ${getEventColor(index)} relative flex items-center justify-between px-8`}>
+              <div className={`h-20 md:h-28 bg-gradient-to-br ${getEventColor(index)} relative flex items-center justify-between px-5 md:px-8`}>
                   <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-2xl shadow-lg">
+                  <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-xl md:text-2xl shadow-lg">
                     {event.nombre_evento?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex gap-2 relative z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                     <button 
+                     <button
                        onClick={(e) => archiveEvent(e, event.id, event.archivado)}
-                       className="w-10 h-10 bg-white/20 hover:bg-white/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
+                       className="w-9 h-9 bg-white/20 hover:bg-white/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
                        title={event.archivado ? 'Desarchivar' : 'Archivar'}
                      >
-                        <AlertCircle size={18} />
+                        <AlertCircle size={16} />
                      </button>
-                     <button 
+                     <button
                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDelete({ open: true, id: event.id }); }}
-                       className="w-10 h-10 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
+                       className="w-9 h-9 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
                        title="Eliminar"
                      >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                      </button>
                   </div>
               </div>
-              
-              <div className="p-8 pt-6 flex-1 bg-white dark:bg-gray-900">
-                 <div className="mb-4">
-                    <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase">{event.nombre_evento}</h3>
-                    <div className="flex items-center gap-2 mt-2">
+
+              <div className="p-4 md:p-8 md:pt-6 flex-1 bg-white dark:bg-gray-900">
+                 <div className="mb-3 md:mb-4">
+                    <h3 className="text-base md:text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase leading-tight">{event.nombre_evento}</h3>
+                    <div className="flex items-center gap-2 mt-1 md:mt-2">
                        <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
                           {event.created ? new Date(event.created).toLocaleDateString() : 'Sin fecha'}
                        </p>
@@ -280,10 +281,10 @@ export default function Dashboard() {
                     </div>
                  </div>
 
-                 <div className="mt-auto pt-6 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
-                    <div className="flex -space-x-2">
+                 <div className="mt-auto pt-3 md:pt-6 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
+                    <div className="flex -space-x-1.5 md:-space-x-2">
                        {[1,2,3].map(i => (
-                         <div key={i} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-950 flex items-center justify-center text-[10px] font-black text-slate-400">
+                         <div key={i} className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-950 flex items-center justify-center text-[9px] md:text-[10px] font-black text-slate-400">
                             {i}
                          </div>
                        ))}
