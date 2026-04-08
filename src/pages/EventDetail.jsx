@@ -67,7 +67,7 @@ export default function EventDetail() {
       if (participantsData.length > 0) setPayerId(participantsData[0].id);
 
       const expensesData = await pb.collection('expenses').getFullList({
-        filter: `id_evento = "${id}" && estado = "activo"`,
+        filter: `id_evento = "${id}"`,
         expand: 'pagado_por',
         sort: '',
       });
