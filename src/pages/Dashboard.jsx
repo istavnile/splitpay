@@ -23,7 +23,9 @@ export default function Dashboard() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const records = await pb.collection('events').getFullList();
+      const records = await pb.collection('events').getFullList({
+        sort: '',
+      });
       setEvents(records);
     } catch (err) {
       console.error(err);

@@ -61,6 +61,7 @@ export default function EventDetail() {
 
       const participantsData = await pb.collection('participants').getFullList({
         filter: `id_evento = "${id}"`,
+        sort: '',
       });
       setParticipants(participantsData);
       if (participantsData.length > 0) setPayerId(participantsData[0].id);
@@ -68,6 +69,7 @@ export default function EventDetail() {
       const expensesData = await pb.collection('expenses').getFullList({
         filter: `id_evento = "${id}" && estado = "activo"`,
         expand: 'pagado_por',
+        sort: '',
       });
       setExpenses(expensesData);
     } catch (err) {
