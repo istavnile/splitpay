@@ -167,8 +167,10 @@ export default function EventDetail() {
                </button>
             </div>
             <div>
-               <h1 className="text-3xl font-black text-white tracking-tight leading-none mb-1 uppercase">{event.nombre_evento}</h1>
-               <p className="text-emerald-100/70 text-[10px] font-bold uppercase tracking-[0.2em]">Creado el {new Date(event.created).toLocaleDateString()}</p>
+               <h1 className="text-3xl font-black text-white tracking-tight leading-none mb-1 uppercase">{event?.nombre_evento || 'Cargando...'}</h1>
+               <p className="text-emerald-100/70 text-[10px] font-bold uppercase tracking-[0.2em]">
+                  {event?.created ? `Creado el ${new Date(event.created).toLocaleDateString()}` : 'Sincronizando...'}
+               </p>
             </div>
             <div className="flex gap-2">
                <Button variant="secondary" className="bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-sm px-4 py-2 h-auto" onClick={() => setModals({...modals, invite: true})}>
