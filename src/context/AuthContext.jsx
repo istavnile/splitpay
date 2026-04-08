@@ -32,17 +32,46 @@ export const AuthProvider = ({ children }) => {
         password,
         passwordConfirm: password,
         name,
+        username: email.split('@')[0] + Math.floor(Math.random() * 1000),
     };
-    const user = await pb.collection('users').create(data);
-    return user;
+    const newUser = await pb.collection('users').create(data);
+    
+    // Auto-link pending invites
+    try {
+      const pendingInvites = await pb.collection('members').getFullList({
+        filter: `email = "${email.toLowerCase().trim()}" && id_usuario = ""`,
+      });
+      
+      for (const invite of pendingInvites) {
+        await pb.collection('members').update(invite.id, {
+          id_usuario: newUser.id
+        });
+      }
+    } catch (err) {
+      console.error('Error linking invites:', err);
+    }
+
+    return newUser;
+  };
+
+  const refresh = async () => {
+    try {
+      const model = await pb.collection('users').authRefresh();
+      setUser(model.record);
+      return model.record;
+    } catch (err) {
+      console.error('Refresh failed:', err);
+    }
   };
 
   const logout = () => {
     pb.authStore.clear();
+    setUser(null);
+    setIsValid(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isValid, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isValid, loading, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

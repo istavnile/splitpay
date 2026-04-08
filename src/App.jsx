@@ -1,9 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EventDetail from './pages/EventDetail';
+import Settings from './pages/Settings';
+import Members from './pages/Members';
+import Activity from './pages/Activity';
+import MainLayout from './components/MainLayout';
 
 export default function App() {
   const { isValid, loading } = useAuth();
@@ -19,9 +23,19 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/login" element={isValid ? <Navigate to="/" /> : <Login />} />
-        <Route path="/" element={isValid ? <Dashboard /> : <Navigate to="/login" />} />
-        <Route path="/event/:id" element={isValid ? <EventDetail /> : <Navigate to="/login" />} />
+
+        {/* Protected Routes (Wrapped in MainLayout) */}
+        <Route element={isValid ? <MainLayout><Outlet /></MainLayout> : <Navigate to="/login" />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/event/:id" element={<EventDetail />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/activity" element={<Activity />} />
+        </Route>
+
+        {/* Redirects */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
