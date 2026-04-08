@@ -23,9 +23,7 @@ export default function Dashboard() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const records = await pb.collection('events').getFullList({
-        sort: '-created',
-      });
+      const records = await pb.collection('events').getFullList();
       setEvents(records);
     } catch (err) {
       console.error(err);
@@ -146,7 +144,8 @@ export default function Dashboard() {
                        <Calendar size={16} />
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                       {new Date(event.created).toLocaleDateString()}
+                       {/* Fecha oculta por error de sistema */}
+                       Evento Activo
                     </span>
                   </div>
                   <h3 className="text-xl font-bold dark:text-white group-hover:text-emerald-500 transition-colors uppercase tracking-tight">{event.nombre_evento}</h3>

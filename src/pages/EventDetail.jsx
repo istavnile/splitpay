@@ -68,7 +68,6 @@ export default function EventDetail() {
       const expensesData = await pb.collection('expenses').getFullList({
         filter: `id_evento = "${id}" && estado = "activo"`,
         expand: 'pagado_por',
-        sort: '-created',
       });
       setExpenses(expensesData);
     } catch (err) {
