@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
-import { Card, Button, Input, ConfirmDialog, StatusModal } from '../components/UI';
+import { Card, Button, Input, ConfirmDialog, StatusModal, Toast } from '../components/UI';
 import { calculateBalance } from '../utils/balanceEngine';
 import { 
   ArrowLeft, Plus, UserPlus, Share2, Trash2, 
@@ -34,6 +34,7 @@ export default function EventDetail() {
   const [copied, setCopied] = useState(false);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+  const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
 
   useEffect(() => {
     fetchData();
@@ -92,12 +93,7 @@ export default function EventDetail() {
         estado: 'activo',
       };
       const record = await pb.collection('expenses').create(data, { expand: 'pagado_por' });
-      setStatus({
-        isOpen: true,
-        type: 'success',
-        title: '¡Gasto Registrado!',
-        message: `Se ha registrado "${description}" por ${moneda}${parseFloat(amount).toFixed(2)} correctamente.`
-      });
+      setToast({ isOpen: true, message: `"${description}" — ${moneda}${parseFloat(amount).toFixed(2)}`, type: 'success' });
       setAmount('');
       setDescription('');
       fetchData();
@@ -289,186 +285,182 @@ export default function EventDetail() {
           </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8">
+      {/* Flat grid — each card has its own order for mobile and lg:col-start for desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 lg:items-start">
 
-        {/* Sidebar: Registrar Gasto + Ajuste de Cuentas — first on mobile */}
-        <div className="lg:col-span-4 flex flex-col gap-5 lg:gap-8 order-first lg:order-last">
-           <Card className="border-none shadow-xl shadow-emerald-500/10 bg-emerald-500 text-white p-5 md:p-8 rounded-[2rem]" hover={false}>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-5 md:mb-8 flex items-center gap-2">
-                 <Plus className="text-emerald-200" /> Registrar Gasto
-              </h3>
-              <form onSubmit={handleAddExpense} className="space-y-4 md:space-y-6">
-                 <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-3 block">¿Quién pagó hoy?</label>
-                    <div className="flex flex-wrap gap-2">
-                       {participants.map(p => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => setPayerId(p.id)}
-                            className={`px-3 py-2 rounded-xl text-[11px] font-black transition-all ${payerId === p.id ? 'bg-white text-emerald-600 shadow-xl scale-105' : 'bg-emerald-600/50 text-emerald-50 hover:bg-emerald-600'}`}
-                          >
-                             {p.nombre}
-                          </button>
-                       ))}
-                    </div>
+        {/* 1. Colaboradores — mobile 1st, desktop right col 3rd */}
+        <Card className="order-1 lg:col-start-9 lg:col-span-4 lg:row-start-3 border-none shadow-sm dark:bg-gray-900/50 p-4 md:p-6 rounded-[2rem]" hover={false}>
+           <h3 className="text-xs font-black dark:text-white mb-3 tracking-tight flex items-center gap-2 uppercase">
+              <Users className="text-indigo-500" size={14} /> Colaboradores
+           </h3>
+           <div className="flex flex-wrap gap-2">
+              {participants.map(p => (
+                <div key={p.id} className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-gray-800/50 rounded-xl border border-slate-100 dark:border-gray-700">
+                   <div className="w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px] shrink-0">
+                      {p.nombre[0].toUpperCase()}
+                   </div>
+                   <span className="text-xs font-black dark:text-white">{p.nombre}</span>
+                   <button
+                     onClick={() => setConfirmState({
+                       open: true,
+                       title: '¿Quitar Participante?',
+                       message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
+                       onConfirm: () => removeParticipant(p.id)
+                     })}
+                     className="p-0.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                   >
+                      <X size={10} />
+                   </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setModals({...modals, invite: true})}
+                className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-slate-300 dark:border-gray-700 rounded-xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-[10px] tracking-widest"
+              >
+                 <Plus size={11} /> Añadir
+              </button>
+           </div>
+        </Card>
+
+        {/* 2. Registrar Gasto — mobile 2nd, desktop right col 1st */}
+        <Card className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 border-none shadow-xl shadow-emerald-500/10 bg-emerald-500 text-white p-5 md:p-8 rounded-[2rem]" hover={false}>
+           <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-5 md:mb-8 flex items-center gap-2">
+              <Plus className="text-emerald-200" /> Registrar Gasto
+           </h3>
+           <form onSubmit={handleAddExpense} className="space-y-4 md:space-y-6">
+              <div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-3 block">¿Quién pagó hoy?</label>
+                 <div className="flex flex-wrap gap-2">
+                    {participants.map(p => (
+                       <button
+                         key={p.id}
+                         type="button"
+                         onClick={() => setPayerId(p.id)}
+                         className={`px-3 py-2 rounded-xl text-[11px] font-black transition-all ${payerId === p.id ? 'bg-white text-emerald-600 shadow-xl scale-105' : 'bg-emerald-600/50 text-emerald-50 hover:bg-emerald-600'}`}
+                       >
+                          {p.nombre}
+                       </button>
+                    ))}
                  </div>
-                 <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">¿En qué se gastó?</label>
+              </div>
+              <div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">¿En qué se gastó?</label>
+                 <Input
+                   placeholder="Ej: Combustible, Drinks..."
+                   value={description}
+                   onChange={e => setDescription(e.target.value)}
+                   required
+                   className="bg-emerald-600/20 border-none text-white placeholder:text-emerald-300/60 h-12 rounded-2xl font-bold text-sm shadow-inner"
+                 />
+              </div>
+              <div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">Monto Total</label>
+                 <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pr-4 border-r border-emerald-600/30 text-emerald-100 font-black z-10">
+                       {moneda}
+                    </div>
                     <Input
-                      placeholder="Ej: Combustible, Drinks..."
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={e => setAmount(e.target.value)}
                       required
-                      className="bg-emerald-600/20 border-none text-white placeholder:text-emerald-300/60 h-12 rounded-2xl font-bold text-sm shadow-inner"
+                      className="bg-emerald-600/20 border-none text-white pl-14 h-12 rounded-2xl font-black text-xl shadow-inner"
                     />
                  </div>
-                 <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">Monto Total</label>
-                    <div className="relative">
-                       <div className="absolute left-4 top-1/2 -translate-y-1/2 pr-4 border-r border-emerald-600/30 text-emerald-100 font-black z-10">
-                          {moneda}
-                       </div>
-                       <Input
-                         type="number"
-                         step="0.01"
-                         placeholder="0.00"
-                         value={amount}
-                         onChange={e => setAmount(e.target.value)}
-                         required
-                         className="bg-emerald-600/20 border-none text-white pl-14 h-12 rounded-2xl font-black text-xl shadow-inner"
-                       />
-                    </div>
-                 </div>
-                 <Button
-                   type="submit"
-                   disabled={addingExpense}
-                   className="w-full py-4 h-auto rounded-2xl bg-slate-900 text-white hover:bg-black border-none font-black shadow-2xl shadow-emerald-950/40 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
-                 >
-                    {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
-                 </Button>
-              </form>
-           </Card>
-
-           <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8 rounded-[2rem]" hover={false}>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-5 md:mb-8 flex items-center gap-2">
-                 <ArrowRightLeft size={16} /> Ajuste de Cuentas
-              </h3>
-              {balance.transferencias.length === 0 ? (
-                <div className="py-8 text-center flex flex-col items-center">
-                   <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 animate-bounce duration-[3000ms]">
-                      <CheckCircle2 size={28} />
-                   </div>
-                   <p className="text-xs font-black text-slate-500 dark:text-gray-400 uppercase tracking-widest">Todo está al día</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                   {balance.transferencias.map((t, i) => (
-                     <div key={i} className="group p-4 bg-slate-50 dark:bg-gray-800/20 rounded-2xl border border-slate-50 dark:border-gray-800 hover:border-emerald-500/30 transition-all">
-                        <div className="flex items-center justify-between mb-2 text-emerald-500">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500">{t.de}</span>
-                           <ArrowLeft size={14} className="rotate-180" />
-                           <span className="text-[10px] font-black uppercase tracking-widest">{t.para}</span>
-                        </div>
-                        <span className="text-2xl font-black dark:text-white tracking-tighter">{moneda}{t.monto.toFixed(2)}</span>
-                     </div>
-                   ))}
-                   <div className="pt-4 border-t border-slate-100 dark:border-gray-800 mt-4">
-                      <Button variant="secondary" className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-100 dark:bg-gray-800 border-none group" onClick={copyBalance}>
-                         {copied ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Share2 size={18} className="group-hover:text-emerald-500 transition-colors" />}
-                         <span className="font-black uppercase tracking-widest text-[11px]">{copied ? 'Enlace Copiado' : 'Compartir Balance'}</span>
-                      </Button>
-                   </div>
-                </div>
-              )}
-           </Card>
-
-           {/* Colaboradores — in sidebar so it's higher on mobile */}
-           <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8 rounded-[2rem]" hover={false}>
-              <h3 className="text-sm font-black dark:text-white mb-4 tracking-tight flex items-center gap-2 uppercase">
-                 <Users className="text-indigo-500" size={16} /> Colaboradores
-              </h3>
-              <div className="flex flex-col gap-2">
-                 {participants.map(p => (
-                   <div key={p.id} className="p-3 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-slate-100 dark:border-gray-800 flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-xs">
-                            {p.nombre[0].toUpperCase()}
-                         </div>
-                         <span className="font-black dark:text-white text-sm">{p.nombre}</span>
-                      </div>
-                      <button
-                        onClick={() => setConfirmState({
-                          open: true,
-                          title: '¿Quitar Participante?',
-                          message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
-                          onConfirm: () => removeParticipant(p.id)
-                        })}
-                        className="p-1.5 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                         <Trash2 size={14} />
-                      </button>
-                   </div>
-                 ))}
-                 <button
-                   onClick={() => setModals({...modals, invite: true})}
-                   className="p-3 border-2 border-dashed border-slate-200 dark:border-gray-800 rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black uppercase text-[10px] tracking-widest"
-                 >
-                    <Plus size={14} /> Añadir Colaborador
-                 </button>
               </div>
-           </Card>
-        </div>
+              <Button
+                type="submit"
+                disabled={addingExpense}
+                className="w-full py-4 h-auto rounded-2xl bg-slate-900 text-white hover:bg-black border-none font-black shadow-2xl shadow-emerald-950/40 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
+              >
+                 {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
+              </Button>
+           </form>
+        </Card>
 
-        {/* Main Content: Historial de Gastos */}
-        <div className="lg:col-span-8">
-           <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
-              <div className="flex items-center justify-between mb-5 md:mb-8">
-                 <h3 className="text-base font-black dark:text-white tracking-tight flex items-center gap-2 uppercase">
-                    <Receipt className="text-emerald-500" /> Historial de Gastos
-                 </h3>
-                 <button className="text-xs font-black text-emerald-500 hover:scale-105 transition-transform uppercase tracking-widest">Filtrar</button>
-              </div>
-              {expenses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 grayscale opacity-40">
-                   <AlertCircle size={36} className="mb-4 text-slate-300" />
-                   <p className="text-xs font-black uppercase tracking-widest">No hay gastos todavía</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                   {expenses.map(exp => (
-                     <div key={exp.id} className="group p-4 bg-slate-50 dark:bg-gray-800/20 rounded-2xl border border-slate-100 dark:border-gray-800 hover:border-emerald-500/30 transition-all flex items-center justify-between">
-                        <div className="flex items-center gap-4 min-w-0">
-                           <div className="w-10 h-10 shrink-0 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-emerald-500 shadow-sm transition-colors border border-slate-50 dark:border-gray-700">
-                              <Wallet size={20} />
-                           </div>
-                           <div className="min-w-0">
-                              <h4 className="font-black dark:text-white text-sm tracking-tight leading-none truncate">{exp.descripcion}</h4>
-                              <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-1">
-                                 <span className="text-emerald-500">{exp.expand?.pagado_por?.nombre}</span>
-                              </p>
-                           </div>
+        {/* 3. Historial de Gastos — mobile 3rd, desktop left col */}
+        <Card className="order-3 lg:col-start-1 lg:col-span-8 lg:row-start-1 lg:row-span-3 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
+           <div className="flex items-center justify-between mb-5 md:mb-8">
+              <h3 className="text-base font-black dark:text-white tracking-tight flex items-center gap-2 uppercase">
+                 <Receipt className="text-emerald-500" /> Historial de Gastos
+              </h3>
+              <button className="text-xs font-black text-emerald-500 hover:scale-105 transition-transform uppercase tracking-widest">Filtrar</button>
+           </div>
+           {expenses.length === 0 ? (
+             <div className="flex flex-col items-center justify-center py-12 grayscale opacity-40">
+                <AlertCircle size={36} className="mb-4 text-slate-300" />
+                <p className="text-xs font-black uppercase tracking-widest">No hay gastos todavía</p>
+             </div>
+           ) : (
+             <div className="space-y-3">
+                {expenses.map(exp => (
+                  <div key={exp.id} className="group p-4 bg-slate-50 dark:bg-gray-800/20 rounded-2xl border border-slate-100 dark:border-gray-800 hover:border-emerald-500/30 transition-all flex items-center justify-between">
+                     <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-10 h-10 shrink-0 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-emerald-500 shadow-sm transition-colors border border-slate-50 dark:border-gray-700">
+                           <Wallet size={20} />
                         </div>
-                        <div className="flex items-center gap-3 text-right shrink-0">
-                           <span className="text-lg font-black dark:text-white tracking-tighter">{moneda}{exp.monto.toFixed(2)}</span>
-                           <button
-                             onClick={() => setConfirmState({
-                               open: true,
-                               title: '¿Borrar Gasto?',
-                               message: '¿Estás seguro de que deseas eliminar este gasto de la lista?',
-                               onConfirm: () => deleteExpense(exp.id)
-                             })}
-                             className="p-2.5 opacity-0 group-hover:opacity-100 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
-                           >
-                              <Trash2 size={16} />
-                           </button>
+                        <div className="min-w-0">
+                           <h4 className="font-black dark:text-white text-sm tracking-tight leading-none truncate">{exp.descripcion}</h4>
+                           <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-1">
+                              <span className="text-emerald-500">{exp.expand?.pagado_por?.nombre}</span>
+                           </p>
                         </div>
                      </div>
-                   ))}
+                     <div className="flex items-center gap-3 text-right shrink-0">
+                        <span className="text-lg font-black dark:text-white tracking-tighter">{moneda}{exp.monto.toFixed(2)}</span>
+                        <button
+                          onClick={() => setConfirmState({
+                            open: true,
+                            title: '¿Borrar Gasto?',
+                            message: '¿Estás seguro de que deseas eliminar este gasto de la lista?',
+                            onConfirm: () => deleteExpense(exp.id)
+                          })}
+                          className="p-2.5 opacity-0 group-hover:opacity-100 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
+                        >
+                           <Trash2 size={16} />
+                        </button>
+                     </div>
+                  </div>
+                ))}
+             </div>
+           )}
+        </Card>
+
+        {/* 4. Ajuste de Cuentas — mobile 4th, desktop right col 2nd */}
+        <Card className="order-4 lg:col-start-9 lg:col-span-4 lg:row-start-2 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8 rounded-[2rem]" hover={false}>
+           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-5 md:mb-8 flex items-center gap-2">
+              <ArrowRightLeft size={16} /> Ajuste de Cuentas
+           </h3>
+           {balance.transferencias.length === 0 ? (
+             <div className="py-8 text-center flex flex-col items-center">
+                <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 animate-bounce duration-[3000ms]">
+                   <CheckCircle2 size={28} />
                 </div>
-              )}
-           </Card>
-        </div>
+                <p className="text-xs font-black text-slate-500 dark:text-gray-400 uppercase tracking-widest">Todo está al día</p>
+             </div>
+           ) : (
+             <div className="space-y-4">
+                {balance.transferencias.map((t, i) => (
+                  <div key={i} className="group p-4 bg-slate-50 dark:bg-gray-800/20 rounded-2xl border border-slate-50 dark:border-gray-800 hover:border-emerald-500/30 transition-all">
+                     <div className="flex items-center justify-between mb-2 text-emerald-500">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500">{t.de}</span>
+                        <ArrowLeft size={14} className="rotate-180" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t.para}</span>
+                     </div>
+                     <span className="text-2xl font-black dark:text-white tracking-tighter">{moneda}{t.monto.toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="pt-4 border-t border-slate-100 dark:border-gray-800 mt-4">
+                   <Button variant="secondary" className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-100 dark:bg-gray-800 border-none group" onClick={copyBalance}>
+                      {copied ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Share2 size={18} className="group-hover:text-emerald-500 transition-colors" />}
+                      <span className="font-black uppercase tracking-widest text-[11px]">{copied ? 'Enlace Copiado' : 'Compartir Balance'}</span>
+                   </Button>
+                </div>
+             </div>
+           )}
+        </Card>
 
       </div>
 
@@ -518,19 +510,18 @@ export default function EventDetail() {
         title={confirmState.title}
         message={confirmState.message}
       />
-      <StatusModal 
-        isOpen={status.isOpen} 
-        onClose={() => setStatus({...status, isOpen: false})} 
+      <StatusModal
+        isOpen={status.isOpen}
+        onClose={() => setStatus({...status, isOpen: false})}
         type={status.type}
         title={status.title}
         message={status.message}
       />
-      <StatusModal 
-        isOpen={status.isOpen} 
-        onClose={() => setStatus({...status, isOpen: false})} 
-        type={status.type}
-        title={status.title}
-        message={status.message}
+      <Toast
+        isOpen={toast.isOpen}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

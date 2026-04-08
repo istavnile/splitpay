@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, X, Shield } from 'lucide-react';
 
 export const Button = ({ children, className = '', variant = 'primary', ...props }) => {
@@ -106,5 +106,32 @@ export const StatusModal = ({ isOpen, onClose, title, message, type = 'success' 
         </Button>
       </div>
     </Modal>
+  );
+};
+
+export const Toast = ({ message, isOpen, onClose, type = 'success' }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const colors = {
+    success: 'bg-emerald-500',
+    error: 'bg-rose-500',
+    info: 'bg-blue-500',
+  };
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 fade-in duration-300 pointer-events-none">
+      <div className="flex items-center gap-3 bg-gray-950 text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 whitespace-nowrap">
+        <div className={`w-6 h-6 rounded-lg ${colors[type]} flex items-center justify-center shrink-0`}>
+          <Check size={13} strokeWidth={3} />
+        </div>
+        <span className="text-sm font-black">{message}</span>
+      </div>
+    </div>
   );
 };
