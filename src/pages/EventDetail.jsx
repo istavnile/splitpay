@@ -66,7 +66,6 @@ export default function EventDetail() {
       const expensesData = await pb.collection('expenses').getFullList({
         filter: `id_evento = "${id}"`,
         expand: 'pagado_por',
-        sort: '',
       });
       setExpenses(expensesData);
     } catch (err) {
