@@ -3,7 +3,7 @@ import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Input } from '../components/UI';
 import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SummaryCard = ({ title, value, icon: Icon, color, onClick }) => (
   <Card 
@@ -195,11 +195,10 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {events.map((event) => (
-            <Card 
+            <Link 
               key={event.id} 
-              className="group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer"
-              hover={false}
-              onClick={() => navigate(`/event/${event.id}`)}
+              to={`/event/${event.id}`}
+              className="group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2rem]"
             >
               <div className="h-24 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 relative">
                  <div className="absolute -bottom-6 left-6 w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-emerald-500 border border-slate-50 dark:border-gray-700 font-bold text-xl">
@@ -236,7 +235,7 @@ export default function Dashboard() {
                     </div>
                  </div>
               </div>
-            </Card>
+            </Link>
           ))}
         </div>
       )}
