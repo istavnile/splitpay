@@ -40,7 +40,7 @@ export default function Dashboard() {
       // 1. Get owned events
       const ownedRecords = await pb.collection('events').getFullList({
         filter: `creado_por = "${user.id}"`,
-        sort: '-created',
+        sort: '',
       });
 
       // 2. Get events where user is a member (Handle potential 404 if collection not created yet)

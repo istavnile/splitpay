@@ -37,7 +37,6 @@ export default function Activity() {
       const expenses = await pb.collection('expenses').getFullList({
         filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || '),
         expand: 'id_evento,pagado_por',
-        sort: '-created',
       });
 
       setActivities(expenses.slice(0, 20)); // Last 20 actions
