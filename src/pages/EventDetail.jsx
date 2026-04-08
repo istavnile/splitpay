@@ -7,7 +7,7 @@ import { calculateBalance } from '../utils/balanceEngine';
 import { 
   ArrowLeft, Plus, UserPlus, Share2, Trash2, 
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
-  Copy, Mail, ChevronRight, X, AlertCircle, Users, TrendingUp, Settings
+  Copy, Mail, ChevronRight, X, AlertCircle, Users, TrendingUp, Settings, Calendar
 } from 'lucide-react';
 
 export default function EventDetail() {
