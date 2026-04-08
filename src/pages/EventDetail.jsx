@@ -68,7 +68,7 @@ export default function EventDetail() {
       const expensesData = await pb.collection('expenses').getFullList({
         filter: `id_evento = "${id}" && estado = "activo"`,
         expand: 'pagado_por',
-        sort: '-fecha_creacion',
+        sort: '-created',
       });
       setExpenses(expensesData);
     } catch (err) {
@@ -91,7 +91,6 @@ export default function EventDetail() {
         pagado_por: payerId,
         creado_por: user.id,
         estado: 'activo',
-        fecha_creacion: new Date().toISOString()
       };
       const record = await pb.collection('expenses').create(data, { expand: 'pagado_por' });
       setExpenses([record, ...expenses]);
