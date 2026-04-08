@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ total: '$0.00', balance: '$0.00', members: '0', activity: '0' });
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
@@ -148,6 +149,43 @@ export default function Dashboard() {
     }
   };
 
+  const deleteEvent = async (e, eventId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('¿Borrar este evento y todos sus gastos?')) return;
+    try {
+      await pb.collection('events').delete(eventId);
+      setEvents(events.filter(ev => ev.id !== eventId));
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const archiveEvent = async (e, eventId, currentStatus) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await pb.collection('events').update(eventId, { archivado: !currentStatus });
+      setEvents(events.map(ev => ev.id === eventId ? { ...ev, archivado: !currentStatus } : ev));
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const getEventColor = (index) => {
+    const colors = [
+      'from-emerald-500 to-teal-500',
+      'from-indigo-500 to-blue-600',
+      'from-rose-500 to-pink-600',
+      'from-amber-600 to-orange-600',
+      'from-purple-500 to-violet-600',
+      'from-cyan-500 to-blue-500'
+    ];
+    return colors[index % colors.length];
+  };
+
+  const filteredEvents = showArchived ? events : events.filter(e => !e.archivado);
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
@@ -171,17 +209,25 @@ export default function Dashboard() {
       </div>
 
       <div className="flex items-center justify-between mb-8">
-         <h3 className="text-xl font-black dark:text-white tracking-tight">Eventos Recientes</h3>
-         <button onClick={fetchEvents} className="text-xs font-bold text-emerald-500 hover:underline uppercase tracking-widest disabled:opacity-50" disabled={loading}>
-            {loading ? 'Sincronizando...' : 'Sincronizar'}
-         </button>
+         <h3 className="text-xl font-black dark:text-white tracking-tight uppercase">Eventos Recientes</h3>
+         <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowArchived(!showArchived)}
+              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-400 hover:text-white'}`}
+            >
+               {showArchived ? 'Ocultar Archivados' : 'Mostrar Archivados'}
+            </button>
+            <button onClick={fetchEvents} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:scale-105 transition-transform" disabled={loading}>
+               {loading ? 'Sincronizando...' : 'Sincronizar'}
+            </button>
+         </div>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
            <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-20 text-center bg-white/20 dark:bg-gray-900/20 border-dashed border-2 border-slate-200 dark:border-gray-800" hover={false}>
           <div className="w-20 h-20 bg-slate-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-6 text-slate-300 dark:text-gray-700">
             <Calendar size={40} />
@@ -193,46 +239,58 @@ export default function Dashboard() {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {events.map((event) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredEvents.map((event, index) => (
             <Link 
               key={event.id} 
               to={`/event/${event.id}`}
-              className="group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2rem]"
+              className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
-              <div className="h-24 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 relative">
-                 <div className="absolute -bottom-6 left-6 w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-emerald-500 border border-slate-50 dark:border-gray-700 font-bold text-xl">
+              <div className={`h-28 bg-gradient-to-br ${getEventColor(index)} relative flex items-center justify-between px-8`}>
+                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-2xl shadow-lg">
                     {event.nombre_evento?.[0]?.toUpperCase()}
-                 </div>
+                  </div>
+                  <div className="flex gap-2 relative z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                     <button 
+                       onClick={(e) => archiveEvent(e, event.id, event.archivado)}
+                       className="w-10 h-10 bg-white/20 hover:bg-white/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
+                       title={event.archivado ? 'Desarchivar' : 'Archivar'}
+                     >
+                        <AlertCircle size={18} />
+                     </button>
+                     <button 
+                       onClick={(e) => deleteEvent(e, event.id)}
+                       className="w-10 h-10 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
+                       title="Eliminar"
+                     >
+                        <Trash2 size={18} />
+                     </button>
+                  </div>
               </div>
-
-              <div className="p-6 pt-10 flex-1">
-                 <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tight">{event.nombre_evento}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">
-                           {event.created ? new Date(event.created.replace(' ', 'T')).toLocaleDateString() : 'Sin fecha'}
-                        </p>
+              
+              <div className="p-8 pt-6 flex-1 bg-white dark:bg-gray-900">
+                 <div className="mb-4">
+                    <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase">{event.nombre_evento}</h3>
+                    <div className="flex items-center gap-2 mt-2">
+                       <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
+                          {event.created ? new Date(event.created.replace(' ','T')).toLocaleDateString() : 'Sin fecha'}
+                       </p>
+                       {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
                     </div>
                  </div>
 
-                 <div className="space-y-4">
-                    <div className="w-full h-1.5 bg-slate-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                       <div className="h-full bg-emerald-500 w-[65%]" style={{ width: `${Math.floor(Math.random() * 60 + 20)}%` }}></div>
+                 <div className="mt-auto pt-6 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
+                    <div className="flex -space-x-2">
+                       {[1,2,3].map(i => (
+                         <div key={i} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-950 flex items-center justify-center text-[10px] font-black text-slate-400">
+                            {i}
+                         </div>
+                       ))}
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                       <div className="flex -space-x-2">
-                          {[1,2,3].map(i => (
-                            <div key={i} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-950 flex items-center justify-center overflow-hidden text-[8px] text-slate-400">
-                               {i}
-                            </div>
-                          ))}
-                       </div>
-                       <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                          Calculando deudas <ChevronRight size={12} />
-                       </span>
-                    </div>
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                       Ver detalle <ChevronRight size={12} />
+                    </span>
                  </div>
               </div>
             </Link>
