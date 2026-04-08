@@ -186,12 +186,6 @@ export default function Login() {
             >
               {isRegistering ? '¿Ya eres miembro? Inicia sesión' : '¿Nuevo aquí? Crea tu cuenta'}
             </button>
-            
-            <div className="mt-10 flex items-center justify-center gap-6 grayscale opacity-40">
-               <img src="https://img.icons8.com/color/48/000000/google-logo.png" className="w-6 h-6" alt="Google" />
-               <img src="https://img.icons8.com/ios-filled/50/ffffff/apple-logo.png" className="w-6 h-6" alt="Apple" />
-               <img src="https://img.icons8.com/color/48/000000/facebook-new.png" className="w-6 h-6" alt="Facebook" />
-            </div>
           </div>
         </div>
 
