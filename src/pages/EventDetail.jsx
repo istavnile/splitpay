@@ -228,7 +228,7 @@ export default function EventDetail() {
                     <div>
                         <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-none">{event?.nombre_evento || 'Cargando...'}</h1>
                         <p className="text-emerald-100/70 text-[10px] font-black uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
-                           <Calendar size={12} /> {event?.created ? new Date(event.created.replace(' ','T')).toLocaleDateString() : 'Sincronizando...'}
+                           <Calendar size={12} /> {event?.created ? new Date(event.created).toLocaleDateString() : 'Sincronizando...'}
                            <span className="mx-2 opacity-30">|</span>
                            <span className="text-emerald-300">Evento Activo ({moneda})</span>
                         </p>

@@ -274,7 +274,7 @@ export default function Dashboard() {
                     <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase">{event.nombre_evento}</h3>
                     <div className="flex items-center gap-2 mt-2">
                        <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-                          {event.created ? new Date(event.created.replace(' ','T')).toLocaleDateString() : 'Sin fecha'}
+                          {event.created ? new Date(event.created).toLocaleDateString() : 'Sin fecha'}
                        </p>
                        {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
                     </div>
