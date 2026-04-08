@@ -182,10 +182,15 @@ export default function EventDetail() {
 
   const toggleCurrency = async (newMoneda) => {
     try {
-      const updated = await pb.collection('events').update(id, { moneda: newMoneda });
-      setEvent(updated);
+      await pb.collection('events').update(id, { moneda: newMoneda });
+      setEvent(prev => ({ ...prev, moneda: newMoneda }));
     } catch (err) {
-      alert('Error al cambiar moneda: ' + err.message);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Ajuste',
+        message: 'No se pudo cambiar la moneda: ' + err.message
+      });
     }
   };
 

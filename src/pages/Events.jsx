@@ -19,7 +19,6 @@ export default function Events() {
       setLoading(true);
       const ownedRecords = await pb.collection('events').getFullList({
         filter: `creado_por = "${user.id}"`,
-        sort: '-created',
       });
       
       let sharedRecords = [];
@@ -33,9 +32,10 @@ export default function Events() {
           .map(m => m.expand.id_evento);
       } catch (err) {}
 
+      console.log(`Fetch: ${ownedRecords.length} owned, ${sharedRecords.length} shared`);
       setEvents([...ownedRecords, ...sharedRecords]);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error fetching events:', err);
     } finally {
       setLoading(false);
     }
@@ -52,6 +52,14 @@ export default function Events() {
     ];
     return colors[index % colors.length];
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center py-20 min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">

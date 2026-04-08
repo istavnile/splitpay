@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
 import { Button, Card, Input, StatusModal } from '../components/UI';
 import { User, Camera, Lock, Mail, Shield, Smartphone, Globe, Bell, Check, X } from 'lucide-react';
 
 export default function Settings() {
-  const { user, refresh } = useAuth();
+  const { user, refresh, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -20,6 +20,14 @@ export default function Settings() {
     confirm: '',
   });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center py-20 min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   // Sync with user changes
   useEffect(() => {
