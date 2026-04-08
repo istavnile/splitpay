@@ -7,6 +7,7 @@ import EventDetail from './pages/EventDetail';
 import Settings from './pages/Settings';
 import Members from './pages/Members';
 import Activity from './pages/Activity';
+import Events from './pages/Events';
 import MainLayout from './components/MainLayout';
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/members" element={<Members />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/events" element={<Events />} />
         </Route>
 
         {/* Redirects */}

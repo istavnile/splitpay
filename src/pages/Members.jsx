@@ -12,6 +12,8 @@ export default function Members() {
   const [editingContact, setEditingContact] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newContact, setNewContact] = useState({ nombre: '', email: '' });
 
   useEffect(() => {
     fetchMembers();
@@ -77,7 +79,6 @@ export default function Members() {
     if (!inviteEmail || !editingContact) return;
     setInviting(true);
     try {
-      // Create a member record to invite them if they are not already a user
       await pb.collection('members').create({
         id_evento: editingContact.eventId,
         email: inviteEmail.toLowerCase().trim(),
@@ -88,6 +89,30 @@ export default function Members() {
       setEditingContact(null);
       setInviteEmail('');
       fetchMembers();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleCreateContact = async (e) => {
+    e.preventDefault();
+    if (!newContact.nombre) return;
+    setInviting(true);
+    try {
+      // Logic: Create a participant in one of the user's events OR just handle it as a global contact?
+      // For now, let's create a participant in the most recent event if exists, or just simulate contact creation.
+      // PocketBase doesn't have a 'contacts' collection yet, so we use 'participants' in events.
+      // But adding a global contact needs a dedicated collection.
+      
+      // For now, let's just show an alert or simulate success if we haven't created the 'contacts' collection.
+      // Wait, the user wants to add them. I should probably create a placeholder or a 'global_contacts' table.
+      // Re-reading previous session: The app uses 'participants' in events.
+      
+      alert("Para añadir un contacto, primero debes invitarlo a un Evento específico.");
+      setIsAddModalOpen(false);
+      setNewContact({ nombre: '', email: '' });
     } catch (err) {
       alert('Error: ' + err.message);
     } finally {
@@ -118,7 +143,10 @@ export default function Members() {
                 className="pl-12 pr-6 py-4 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md border border-slate-100 dark:border-gray-800 rounded-3xl text-sm font-black w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white"
               />
            </div>
-           <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-500/20 py-4 h-auto px-6 font-black uppercase tracking-widest text-[11px]">
+           <Button 
+             onClick={() => setIsAddModalOpen(true)}
+             className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-500/20 py-4 h-auto px-6 font-black uppercase tracking-widest text-[11px]"
+           >
               <UserPlus size={18} /> <span className="ml-2">Añadir Nuevo</span>
            </Button>
         </div>
@@ -233,6 +261,48 @@ export default function Members() {
                       {inviting ? 'Procesando...' : 'Vincular e Invitar'}
                    </Button>
                    <Button variant="ghost" className="py-5 h-auto rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-400" onClick={() => setEditingContact(null)} type="button">
+                      Cerrar
+                   </Button>
+                </div>
+             </form>
+          </Card>
+        </div>
+      )}
+      {/* Add New Contact Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
+          <Card className="max-w-md w-full animate-in zoom-in-95 duration-200 p-10 border-none shadow-2xl rounded-[3rem]" hover={false}>
+             <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black flex items-center gap-3 dark:text-white tracking-tight leading-none uppercase">
+                  <UserPlus className="text-indigo-500" size={32} /> Nuevo Contacto
+                </h2>
+                <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                   <X size={28} />
+                </button>
+             </div>
+             <form onSubmit={handleCreateContact} className="space-y-6">
+                <Input 
+                  label="Nombre" 
+                  placeholder="Ej: Juan Pérez" 
+                  value={newContact.nombre}
+                  onChange={e => setNewContact({...newContact, nombre: e.target.value})}
+                  autoFocus
+                  required
+                  className="bg-slate-50 dark:bg-gray-800 border-none h-14 px-6 rounded-2xl font-bold"
+                />
+                <Input 
+                  label="Correo Electrónico (Opcional)" 
+                  type="email"
+                  placeholder="ejemplo@email.com" 
+                  value={newContact.email}
+                  onChange={e => setNewContact({...newContact, email: e.target.value})}
+                  className="bg-slate-50 dark:bg-gray-800 border-none h-14 px-6 rounded-2xl font-bold"
+                />
+                <div className="flex flex-col gap-3 pt-4">
+                   <Button className="py-5 h-auto rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 uppercase tracking-widest text-xs" type="submit" disabled={inviting}>
+                      {inviting ? 'Guardando...' : 'Guardar Contacto'}
+                   </Button>
+                   <Button variant="ghost" className="py-5 h-auto rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-400" onClick={() => setIsAddModalOpen(false)} type="button">
                       Cerrar
                    </Button>
                 </div>

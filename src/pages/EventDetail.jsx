@@ -205,16 +205,16 @@ export default function EventDetail() {
                     >
                         <UserPlus size={18} /> <span className="ml-2">Invitar</span>
                     </Button>
-                    <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/10 shrink-0">
+                    <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/10 shrink-0 h-11 self-center">
                        <button 
                          onClick={() => toggleCurrency('$')}
-                         className={`px-3 py-1 rounded-xl text-xs font-black transition-all ${moneda === '$' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}
+                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === '$' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
                        >
                          $
                        </button>
                        <button 
                          onClick={() => toggleCurrency('S/.')}
-                         className={`px-3 py-1 rounded-xl text-xs font-black transition-all ${moneda === 'S/.' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}
+                         className={`px-4 rounded-xl text-xs font-black transition-all ${moneda === 'S/.' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
                        >
                          S/.
                        </button>
@@ -364,19 +364,19 @@ export default function EventDetail() {
 
                  <div className="space-y-6">
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">¿En qué se gastó?</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block tracking-widest">¿En qué se gastó?</label>
                         <Input 
                           placeholder="Ej: Combustible, Drinks..." 
                           value={description} 
                           onChange={e => setDescription(e.target.value)} 
                           required 
-                          className="bg-emerald-600/50 border-none text-white placeholder:text-emerald-300 h-14 rounded-2xl font-black"
+                          className="bg-emerald-600/20 border-none text-white placeholder:text-emerald-300 h-14 rounded-2xl font-bold text-sm shadow-inner"
                         />
                     </div>
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">Monto Total</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block tracking-widest">Monto Total</label>
                         <div className="relative">
-                           <div className="absolute left-4 top-1/2 -translate-y-1/2 pr-4 border-r border-emerald-600/50 text-emerald-200 font-black">
+                           <div className="absolute left-4 top-1/2 -translate-y-1/2 pr-4 border-r border-emerald-600/30 text-emerald-100 font-black">
                               {moneda}
                            </div>
                            <Input 
@@ -386,13 +386,17 @@ export default function EventDetail() {
                              value={amount} 
                              onChange={e => setAmount(e.target.value)} 
                              required 
-                             className="bg-emerald-600/50 border-none text-white pl-16 h-14 rounded-2xl font-black text-xl"
+                             className="bg-emerald-600/20 border-none text-white pl-16 h-14 rounded-2xl font-black text-xl shadow-inner"
                            />
                         </div>
                     </div>
                  </div>
                  
-                 <Button type="submit" disabled={addingExpense} className="w-full py-5 h-auto rounded-2xl bg-white text-emerald-600 hover:bg-emerald-50 border-none font-black shadow-2xl shadow-emerald-900/40 uppercase tracking-widest text-[11px] transition-all active:scale-95">
+                 <Button 
+                   type="submit" 
+                   disabled={addingExpense} 
+                   className="w-full py-5 h-auto rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 border-none font-black shadow-2xl shadow-emerald-950/30 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
+                 >
                     {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
                  </Button>
               </form>
