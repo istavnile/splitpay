@@ -70,8 +70,9 @@ export default function Settings() {
             moneda_preferida: formData.moneda_preferida
           };
 
-      await pb.collection('users').update(user.id, updateData);
-      console.log('User updated with moneda:', formData.moneda_preferida);
+      const updated = await pb.collection('users').update(user.id, updateData);
+      // Directly patch the authStore model so moneda_preferida persists on reload
+      pb.authStore.save(pb.authStore.token, { ...pb.authStore.model, ...updated });
       await refresh();
       setStatus({
         isOpen: true,
