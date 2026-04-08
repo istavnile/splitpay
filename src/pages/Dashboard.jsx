@@ -211,7 +211,9 @@ export default function Dashboard() {
                  <div className="flex justify-between items-start mb-4">
                     <div>
                         <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tight">{event.nombre_evento}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{new Date(event.created).toLocaleDateString()}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">
+                           {event.created ? new Date(event.created.replace(' ', 'T')).toLocaleDateString() : 'Sin fecha'}
+                        </p>
                     </div>
                  </div>
 
