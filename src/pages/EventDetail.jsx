@@ -58,6 +58,10 @@ export default function EventDetail() {
     try {
       setLoading(true);
       const eventData = await pb.collection('events').getOne(id);
+      // Prefer PocketBase moneda, fall back to localStorage, then '$'
+      if (!eventData.moneda) {
+        eventData.moneda = localStorage.getItem(`event_moneda_${id}`) || '$';
+      }
       setEvent(eventData);
 
       const participantsData = await pb.collection('participants').getFullList({
@@ -177,9 +181,11 @@ export default function EventDetail() {
   };
 
   const toggleCurrency = async (newMoneda) => {
+    // Save to localStorage immediately so it persists regardless of PocketBase schema
+    localStorage.setItem(`event_moneda_${id}`, newMoneda);
+    setEvent(prev => ({ ...prev, moneda: newMoneda }));
     try {
       await pb.collection('events').update(id, { moneda: newMoneda });
-      setEvent(prev => ({ ...prev, moneda: newMoneda }));
     } catch (err) {
       setStatus({
         isOpen: true,
