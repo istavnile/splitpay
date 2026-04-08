@@ -110,9 +110,10 @@ export default function Dashboard() {
         // 5. Count Unique Members
         const uniqueNames = new Set(allParticipants.map(p => p.nombre.toLowerCase().trim()));
 
+        const globalMoneda = user.moneda_preferida || '$';
         setStats({
-            total: `$${myTotalPaid.toFixed(2)}`,
-            balance: `${globalNet >= 0 ? '+' : ''}$${globalNet.toFixed(2)}`,
+            total: `${globalMoneda}${myTotalPaid.toFixed(2)}`,
+            balance: `${globalNet >= 0 ? '+' : ''}${globalMoneda}${globalNet.toFixed(2)}`,
             members: uniqueNames.size.toString(),
             activity: allEvents.length.toString()
         });
@@ -129,6 +130,7 @@ export default function Dashboard() {
       const data = {
         nombre_evento: newEventName.trim(),
         creado_por: user.id,
+        moneda: user.moneda_preferida || '$',
       };
       const record = await pb.collection('events').create(data);
       

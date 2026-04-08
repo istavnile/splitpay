@@ -94,7 +94,7 @@ export default function Activity() {
                  </div>
                  <div className="flex items-center gap-6">
                     <span className="text-2xl font-black dark:text-white tracking-tighter text-right">
-                       ${act.monto?.toFixed(2)}
+                       {act.expand?.id_evento?.moneda || '$'}{act.monto?.toFixed(2)}
                     </span>
                     <ChevronRight size={18} className="text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" />
                  </div>

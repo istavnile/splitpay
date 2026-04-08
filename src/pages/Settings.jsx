@@ -12,6 +12,7 @@ export default function Settings() {
     name: user?.name || '',
     username: user?.username || '',
     email: user?.email || '',
+    moneda_preferida: user?.moneda_preferida || '$',
   });
   const [passwords, setPasswords] = useState({
     old: '',
@@ -33,6 +34,7 @@ export default function Settings() {
       const data = new FormData();
       data.append('name', formData.name);
       data.append('username', formData.username);
+      data.append('moneda_preferida', formData.moneda_preferida);
 
       const avatarFile = document.getElementById('avatar-input').files[0];
       if (avatarFile) {
@@ -126,11 +128,25 @@ export default function Settings() {
                       value={formData.name} 
                       onChange={e => setFormData({...formData, name: e.target.value})}
                    />
-                   <Input 
-                      label="Nombre de Usuario" 
-                      value={formData.username} 
-                      onChange={e => setFormData({...formData, username: e.target.value})}
-                   />
+                   <div>
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1 block mb-1.5">Moneda Global</label>
+                      <div className="flex bg-slate-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
+                         <button 
+                           type="button"
+                           onClick={() => setFormData({...formData, moneda_preferida: '$'})}
+                           className={`px-6 py-2 rounded-lg text-sm font-black transition-all ${formData.moneda_preferida === '$' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                         >
+                           $ USD
+                         </button>
+                         <button 
+                           type="button"
+                           onClick={() => setFormData({...formData, moneda_preferida: 'S/.'})}
+                           className={`px-6 py-2 rounded-lg text-sm font-black transition-all ${formData.moneda_preferida === 'S/.' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                         >
+                           S/. PEN
+                         </button>
+                      </div>
+                   </div>
                 </div>
                 <Input label="Email Address" value={formData.email} disabled className="opacity-60 cursor-not-allowed" />
 
