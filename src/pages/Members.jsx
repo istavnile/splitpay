@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Check, ArrowRight, Trash2 } from 'lucide-react';
+import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X } from 'lucide-react';
 import { Card, Button, Input, StatusModal } from '../components/UI';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
@@ -177,67 +177,52 @@ export default function Members() {
           <p className="text-slate-500 dark:text-gray-400 mt-4 max-w-xs font-bold leading-relaxed">Invita a tus amigos a tus eventos para que aparezcan aquí automáticamente con su historial.</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
            {filteredMembers.map((member, i) => (
-              <Card key={i} className="border-none shadow-sm shadow-indigo-500/5 dark:bg-gray-900/60 p-8 flex flex-col gap-6 group rounded-[2.5rem]" hover={true}>
-                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Card key={i} className="border-none shadow-sm shadow-indigo-500/5 dark:bg-gray-900/60 p-4 flex flex-col gap-3 group rounded-[1.5rem]" hover={true}>
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
                        {member.nombre[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                       <h4 className="text-xl font-black dark:text-white truncate uppercase tracking-tighter">{member.nombre}</h4>
-                       <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-2 flex items-center gap-2">
-                          {member.isUser ? <Globe size={12} className="text-indigo-500" /> : <MessageSquare size={12} />}
-                          {member.isUser ? 'Usuario Verificado' : 'Contacto Local'}
+                       <h4 className="text-sm font-black dark:text-white truncate uppercase tracking-tight">{member.nombre}</h4>
+                       <p className="text-[9px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-0.5 flex items-center gap-1">
+                          {member.isUser ? <Globe size={10} className="text-indigo-500" /> : <MessageSquare size={10} />}
+                          {member.isUser ? 'Verificado' : 'Local'}
                        </p>
                     </div>
                  </div>
-                 
-                 <div className="pt-6 border-t border-slate-50 dark:border-gray-800/50 flex flex-col gap-4">
-                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500">
-                       <span>Correo Electrónico</span>
-                       {member.email ? <Check size={14} className="text-emerald-500" /> : <X size={14} className="text-rose-500" />}
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                       <span className="text-sm font-bold dark:text-white truncate opacity-70">
-                          {member.email || 'Sin correo asociado'}
-                       </span>
-                       <button 
-                         onClick={() => { setEditingContact(member); setInviteEmail(member.email); }}
-                         className="p-3 bg-slate-100 dark:bg-gray-800 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm"
-                       >
-                          <Mail size={18} />
-                       </button>
-                    </div>
-                 </div>
 
-                 {member.email && !member.isUser && (
-                   <button 
-                     onClick={() => { setEditingContact(member); setInviteEmail(member.email); handleUpdateContact(new Event('submit')); }}
-                     className="mt-2 w-full py-4 h-auto rounded-2xl bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all font-black uppercase tracking-widest text-[10px]"
-                   >
-                     Reenviar Invitación
-                   </button>
-                 )}
+                 <div className="pt-3 border-t border-slate-50 dark:border-gray-800/50 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold dark:text-white truncate opacity-60">
+                       {member.email || 'Sin correo'}
+                    </span>
+                    <button
+                      onClick={() => { setEditingContact(member); setInviteEmail(member.email); }}
+                      className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm shrink-0"
+                    >
+                       <Mail size={14} />
+                    </button>
+                 </div>
               </Card>
            ))}
         </div>
       )}
 
       {/* Stats Bottom */}
-      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 p-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[3rem] shadow-2xl shadow-indigo-500/30 text-white overflow-hidden relative group">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-         <div className="flex flex-col gap-2 relative z-10 border-r border-white/10">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Amigos</span>
-            <span className="text-5xl font-black tracking-tighter">{members.length}</span>
+      <div className="mt-8 grid grid-cols-3 gap-0 px-6 py-5 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] shadow-2xl shadow-indigo-500/30 text-white overflow-hidden relative group">
+         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+         <div className="flex flex-col gap-0.5 relative z-10 border-r border-white/10 pr-4">
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Amigos</span>
+            <span className="text-3xl font-black tracking-tighter">{members.length}</span>
          </div>
-         <div className="flex flex-col gap-2 relative z-10 border-r border-white/10">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Usuarios App</span>
-            <span className="text-5xl font-black tracking-tighter">{members.filter(m => m.isUser).length}</span>
+         <div className="flex flex-col gap-0.5 relative z-10 border-r border-white/10 px-4">
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">En App</span>
+            <span className="text-3xl font-black tracking-tighter">{members.filter(m => m.isUser).length}</span>
          </div>
-         <div className="flex flex-col gap-2 relative z-10">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Contactos Locales</span>
-            <span className="text-5xl font-black tracking-tighter">{members.filter(m => !m.isUser).length}</span>
+         <div className="flex flex-col gap-0.5 relative z-10 pl-4">
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Locales</span>
+            <span className="text-3xl font-black tracking-tighter">{members.filter(m => !m.isUser).length}</span>
          </div>
       </div>
 

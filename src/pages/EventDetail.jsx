@@ -214,7 +214,7 @@ export default function EventDetail() {
       
       {/* Event Header Card */}
       <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem]" hover={false}>
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-5 md:p-12 text-white relative group">
+          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 w-full">
@@ -382,10 +382,46 @@ export default function EventDetail() {
                 </div>
               )}
            </Card>
+
+           {/* Colaboradores — in sidebar so it's higher on mobile */}
+           <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8 rounded-[2rem]" hover={false}>
+              <h3 className="text-sm font-black dark:text-white mb-4 tracking-tight flex items-center gap-2 uppercase">
+                 <Users className="text-indigo-500" size={16} /> Colaboradores
+              </h3>
+              <div className="flex flex-col gap-2">
+                 {participants.map(p => (
+                   <div key={p.id} className="p-3 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-slate-100 dark:border-gray-800 flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-xs">
+                            {p.nombre[0].toUpperCase()}
+                         </div>
+                         <span className="font-black dark:text-white text-sm">{p.nombre}</span>
+                      </div>
+                      <button
+                        onClick={() => setConfirmState({
+                          open: true,
+                          title: '¿Quitar Participante?',
+                          message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
+                          onConfirm: () => removeParticipant(p.id)
+                        })}
+                        className="p-1.5 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                         <Trash2 size={14} />
+                      </button>
+                   </div>
+                 ))}
+                 <button
+                   onClick={() => setModals({...modals, invite: true})}
+                   className="p-3 border-2 border-dashed border-slate-200 dark:border-gray-800 rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black uppercase text-[10px] tracking-widest"
+                 >
+                    <Plus size={14} /> Añadir Colaborador
+                 </button>
+              </div>
+           </Card>
         </div>
 
-        {/* Main Content: Historial + Colaboradores */}
-        <div className="lg:col-span-8 space-y-5 lg:space-y-8">
+        {/* Main Content: Historial de Gastos */}
+        <div className="lg:col-span-8">
            <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
               <div className="flex items-center justify-between mb-5 md:mb-8">
                  <h3 className="text-base font-black dark:text-white tracking-tight flex items-center gap-2 uppercase">
@@ -431,41 +467,6 @@ export default function EventDetail() {
                    ))}
                 </div>
               )}
-           </Card>
-
-           <Card className="border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
-              <h3 className="text-base font-black dark:text-white mb-5 md:mb-8 tracking-tight flex items-center gap-2 uppercase">
-                 <Users className="text-indigo-500" /> Colaboradores
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 {participants.map(p => (
-                   <div key={p.id} className="p-3 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-slate-100 dark:border-gray-800 flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                         <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-sm">
-                            {p.nombre[0].toUpperCase()}
-                         </div>
-                         <span className="font-black dark:text-white text-sm">{p.nombre}</span>
-                      </div>
-                      <button
-                        onClick={() => setConfirmState({
-                          open: true,
-                          title: '¿Quitar Participante?',
-                          message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
-                          onConfirm: () => removeParticipant(p.id)
-                        })}
-                        className="p-2 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                         <Trash2 size={15} />
-                      </button>
-                   </div>
-                 ))}
-                 <button
-                   onClick={() => setModals({...modals, invite: true})}
-                   className="p-3 border-2 border-dashed border-slate-200 dark:border-gray-800 rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black uppercase text-[10px] tracking-widest"
-                 >
-                    <Plus size={15} /> Añadir Colaborador
-                 </button>
-              </div>
            </Card>
         </div>
 
