@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Share2, Copy, MessageCircle, Send } from 'lucide-react';
+import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Share2, Copy, MessageCircle, Send, Edit, RefreshCcw } from 'lucide-react';
 import { Card, Button, Input, StatusModal } from '../components/UI';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
@@ -268,14 +268,23 @@ export default function Members() {
                            setEditingName(member.nombre);
                          }}
                          className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm"
-                         title="Editar"
+                         title="Editar Perfil"
                        >
-                          <Mail size={14} />
+                          <Edit size={14} />
                        </button>
+                       {member.email && (
+                         <button
+                           onClick={() => handleEmailInvite(member)}
+                           className="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm border border-indigo-100 dark:border-indigo-500/20"
+                           title="Reenviar Invitación por Email"
+                         >
+                            <RefreshCcw size={14} />
+                         </button>
+                       )}
                        <button
                          onClick={() => handleShare(member)}
                          className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                         title="Invitar"
+                         title="Compartir / Invitar"
                        >
                           <Share2 size={14} />
                        </button>
