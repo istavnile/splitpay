@@ -173,11 +173,25 @@ export default function Dashboard() {
   };
 
   const deleteEvent = async () => {
+    const eventId = confirmDelete.id;
     try {
-      await pb.collection('events').delete(confirmDelete.id);
-      setEvents(events.filter(ev => ev.id !== confirmDelete.id));
+      // Cascade: delete related records first
+      const [participants, expenses, members, presence] = await Promise.all([
+        pb.collection('participants').getFullList({ filter: `id_evento = "${eventId}"` }),
+        pb.collection('expenses').getFullList({ filter: `id_evento = "${eventId}"` }),
+        pb.collection('members').getFullList({ filter: `id_evento = "${eventId}"` }),
+        pb.collection('presence').getFullList({ filter: `id_evento = "${eventId}"` }).catch(() => []),
+      ]);
+      await Promise.all([
+        ...participants.map(r => pb.collection('participants').delete(r.id)),
+        ...expenses.map(r => pb.collection('expenses').delete(r.id)),
+        ...members.map(r => pb.collection('members').delete(r.id)),
+        ...presence.map(r => pb.collection('presence').delete(r.id)),
+      ]);
+      await pb.collection('events').delete(eventId);
+      setEvents(events.filter(ev => ev.id !== eventId));
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error al eliminar: ' + err.message);
     }
   };
 
