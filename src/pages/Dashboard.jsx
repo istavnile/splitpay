@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import pb from '../lib/pocketbase';
+import { getEventColorTw } from '../utils/eventColor';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Input, ConfirmDialog } from '../components/UI';
 import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
@@ -206,17 +207,6 @@ export default function Dashboard() {
     }
   };
 
-  const getEventColor = (index) => {
-    const colors = [
-      'from-emerald-500 to-teal-500',
-      'from-indigo-500 to-blue-600',
-      'from-rose-500 to-pink-600',
-      'from-amber-600 to-orange-600',
-      'from-purple-500 to-violet-600',
-      'from-cyan-500 to-blue-500'
-    ];
-    return colors[index % colors.length];
-  };
 
   const filteredEvents = showArchived ? events : events.filter(e => !e.archivado);
 
@@ -274,13 +264,13 @@ export default function Dashboard() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-          {filteredEvents.map((event, index) => (
+          {filteredEvents.map((event) => (
             <Link
               key={event.id}
               to={`/event/${event.id}`}
               className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2rem] md:rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
-              <div className={`h-20 md:h-28 bg-gradient-to-br ${getEventColor(index)} relative flex items-center justify-between px-5 md:px-8`}>
+              <div className={`h-20 md:h-28 bg-gradient-to-br ${getEventColorTw(event.id)} relative flex items-center justify-between px-5 md:px-8`}>
                   <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-xl md:text-2xl shadow-lg">
                     {event.nombre_evento?.[0]?.toUpperCase()}

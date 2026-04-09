@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getEventColorCss } from '../utils/eventColor';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
@@ -297,7 +298,7 @@ export default function EventDetail() {
       
       {/* Event Header Card */}
       <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem]" hover={false}>
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
+          <div style={{ background: getEventColorCss(id) }} className="p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 w-full">
