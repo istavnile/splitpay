@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X } from 'lucide-react';
+import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Share2, Copy, MessageCircle, Send } from 'lucide-react';
 import { Card, Button, Input, StatusModal } from '../components/UI';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ export default function Members() {
   const [editingName, setEditingName] = useState('');
   const [inviting, setInviting] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [invitingContact, setInvitingContact] = useState(null);
   const [newContact, setNewContact] = useState({ nombre: '', email: '' });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
@@ -160,6 +161,39 @@ export default function Members() {
     }
   };
 
+  const handleEmailInvite = (contact) => {
+    const subject = encodeURIComponent('¡Únete a mis proyectos en SplitPay!');
+    const body = encodeURIComponent(`¡Hola ${contact.nombre}! Te invito a usar SplitPay para gestionar nuestros gastos compartidos. \n\nRegístrate aquí: ${window.location.origin}`);
+    window.location.href = `mailto:${contact.email || ''}?subject=${subject}&body=${body}`;
+  };
+
+  const handleWhatsAppInvite = (contact) => {
+    const text = encodeURIComponent(`¡Hola ${contact.nombre}! 👋 Te invito a usar SplitPay para gestionar nuestros gastos compartidos. Regístrate aquí: ${window.location.origin}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.origin);
+    setStatus({
+      isOpen: true,
+      type: 'success',
+      title: 'Enlace Copiado',
+      message: 'El link de invitación se ha copiado al portapapeles.'
+    });
+  };
+
+  const handleShare = (contact) => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Invitación a SplitPay',
+        text: `¡Hola ${contact.nombre}! 👋 Te invito a usar SplitPay para gestionar nuestros gastos de forma fácil y moderna.`,
+        url: window.location.origin,
+      }).catch(() => setInvitingContact(contact));
+    } else {
+      setInvitingContact(contact);
+    }
+  };
+
   const filteredMembers = members.filter(m => 
     m.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -226,16 +260,26 @@ export default function Members() {
                     <span className="text-[11px] font-bold dark:text-white truncate opacity-60">
                        {member.email || 'Sin correo'}
                     </span>
-                    <button
-                      onClick={() => { 
-                        setEditingContact(member); 
-                        setInviteEmail(member.email || '');
-                        setEditingName(member.nombre);
-                      }}
-                      className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm shrink-0"
-                    >
-                       <Mail size={14} />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                       <button
+                         onClick={() => { 
+                           setEditingContact(member); 
+                           setInviteEmail(member.email || '');
+                           setEditingName(member.nombre);
+                         }}
+                         className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm"
+                         title="Editar"
+                       >
+                          <Mail size={14} />
+                       </button>
+                       <button
+                         onClick={() => handleShare(member)}
+                         className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                         title="Invitar"
+                       >
+                          <Share2 size={14} />
+                       </button>
+                    </div>
                  </div>
               </Card>
            ))}
@@ -344,6 +388,61 @@ export default function Members() {
                    </Button>
                 </div>
              </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Invitation Modal */}
+      {invitingContact && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
+          <Card className="max-w-md w-full animate-in zoom-in-95 duration-200 p-10 border-none shadow-2xl rounded-[3rem] bg-white dark:bg-gray-900" hover={false}>
+             <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black flex items-center gap-3 dark:text-white tracking-tight leading-none uppercase">
+                  <Share2 className="text-emerald-500" size={32} /> Invitar Amigo
+                </h2>
+                <button onClick={() => setInvitingContact(null)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                   <X size={28} />
+                </button>
+             </div>
+             
+             <div className="space-y-6">
+                <div className="p-6 bg-slate-50 dark:bg-gray-800/50 rounded-3xl border border-slate-100 dark:border-gray-800">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2 text-center">Enlace de Invitación</p>
+                    <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-gray-800">
+                        <span className="flex-1 text-[10px] font-bold text-slate-500 truncate">{window.location.origin}</span>
+                        <button onClick={handleCopyLink} className="p-2 bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 hover:scale-110 transition-transform">
+                            <Copy size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => handleWhatsAppInvite(invitingContact)}
+                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 dark:bg-emerald-500/5 rounded-3xl border border-emerald-100 dark:border-emerald-500/20 hover:bg-emerald-500 hover:text-white group transition-all"
+                    >
+                        <MessageCircle size={32} className="text-emerald-500 group-hover:text-white" />
+                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">WhatsApp</span>
+                    </button>
+                    <button 
+                        onClick={() => handleEmailInvite(invitingContact)}
+                        className="flex flex-col items-center gap-3 p-6 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white group transition-all"
+                    >
+                        <Send size={32} className="text-indigo-500 group-hover:text-white" />
+                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">Correo</span>
+                    </button>
+                </div>
+
+                <div className="pt-4">
+                    <Button 
+                        variant="ghost" 
+                        className="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] opacity-50 hover:opacity-100 transition-opacity" 
+                        onClick={() => setInvitingContact(null)}
+                    >
+                       Cerrar
+                    </Button>
+                </div>
+             </div>
           </Card>
         </div>
       )}
