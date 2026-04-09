@@ -118,10 +118,17 @@ export default function EventDetail() {
     if (!inviteEmail) return;
     setInviting(true);
     try {
+      let invitedUserId = null;
+      try {
+        const found = await pb.collection('users').getFirstListItem(`email = "${inviteEmail.toLowerCase().trim()}"`);
+        invitedUserId = found?.id || null;
+      } catch (_) {}
+
       await pb.collection('members').create({
         id_evento: id,
         email: inviteEmail.toLowerCase().trim(),
-        rol: 'editor'
+        rol: 'editor',
+        ...(invitedUserId ? { id_usuario: invitedUserId } : {})
       });
 
       const nameFromEmail = inviteEmail.split('@')[0];

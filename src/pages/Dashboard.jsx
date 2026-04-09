@@ -50,7 +50,7 @@ export default function Dashboard() {
       let sharedRecords = [];
       try {
         const memberships = await pb.collection('members').getFullList({
-          filter: `id_usuario = "${user.id}"`,
+          filter: `id_usuario = "${user.id}" || email = "${user.email}"`,
           expand: 'id_evento',
         });
         sharedRecords = memberships
