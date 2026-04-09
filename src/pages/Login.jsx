@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button, Input, Card } from '../components/UI';
-import { LogIn, UserPlus, Fingerprint, Sun, Moon, Info, HelpCircle, ChevronDown, CheckCircle2, ShieldCheck, Globe } from 'lucide-react';
+import { LogIn, UserPlus, Fingerprint, Sun, Moon, Info, HelpCircle, ChevronDown, CheckCircle2, ShieldCheck, Globe, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 
@@ -33,6 +33,7 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, register } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -51,7 +52,17 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Error en la operación');
+      console.error('Auth error:', err);
+      let msg = err.message || 'Error en la operación';
+      
+      // Handle "Email already exists" specially
+      if (msg.toLowerCase().includes('unique') || (err.data && JSON.stringify(err.data).toLowerCase().includes('unique'))) {
+        msg = 'Este correo ya está registrado. Si recibiste una invitación, intenta iniciar sesión o recupera tu clave.';
+      } else if (msg.includes('Failed to create record')) {
+        msg = 'La cuenta ya existe o los datos son inválidos. Intenta iniciar sesión.';
+      }
+      
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -111,7 +122,7 @@ export default function Login() {
       </section>
 
       {/* Right Column: Auth Form */}
-      <section className="lg:col-span-5 flex items-center justify-center p-8 lg:p-20 relative">
+      <section className="lg:col-span-5 flex items-center justify-center p-8 lg:p-20 relative pt-32 lg:pt-20">
         {/* Mobile Top Bar */}
         <div className="absolute top-8 left-8 right-8 flex justify-between lg:hidden items-center">
            <Logo size="sm" />
@@ -154,12 +165,21 @@ export default function Login() {
 
             <Input
               label="Contraseña"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               className="bg-slate-50 dark:bg-gray-900 border-none p-5 rounded-2xl font-bold dark:text-white"
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-2 text-slate-400 hover:text-emerald-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              }
             />
 
             {error && (
