@@ -29,8 +29,11 @@ export default function Members() {
       const owned = await pb.collection('events').getFullList({ filter: `creado_por = "${user.id}"` });
       let shared = [];
       try {
-        const membs = await pb.collection('members').getFullList({ filter: `id_usuario = "${user.id}"`, expand: 'id_evento' });
-        shared = membs.filter(m => m.id_evento).map(m => m.expand.id_evento);
+        const membs = await pb.collection('members').getFullList({ filter: `id_usuario = "${user.id}" || email = "${user.email}"`, expand: 'id_evento' });
+        // Auto-patch records found by email that are missing id_usuario
+        membs.filter(m => !m.id_usuario && m.email === user.email)
+          .forEach(m => pb.collection('members').update(m.id, { id_usuario: user.id }).catch(() => {}));
+        shared = membs.filter(m => m.id_evento && m.expand?.id_evento).map(m => m.expand.id_evento);
       } catch (e) {}
 
       const allEventIds = [...new Set([...owned, ...shared].map(e => e.id))];
@@ -51,9 +54,9 @@ export default function Members() {
         filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || ')
       });
 
-      // 4. Unique by name or userId or email
+      // 4. Unique by name or userId or email — exclude self
       const uniqueMap = {};
-      participants.forEach(p => {
+      participants.filter(p => p.id_usuario !== user.id && p.email?.toLowerCase() !== user.email?.toLowerCase()).forEach(p => {
         const key = p.id_usuario || p.nombre.toLowerCase().trim();
         const existingInv = invs.find(i => 
           (p.id_usuario && i.id_usuario === p.id_usuario) || 
