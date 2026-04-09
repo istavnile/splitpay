@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
@@ -35,10 +35,77 @@ export default function EventDetail() {
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
+  const [onlineUsers, setOnlineUsers] = useState({}); // { id_usuario: last_seen ISO string }
+  const presenceRecordId = useRef(null);
+  const heartbeatRef = useRef(null);
 
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // Presence system
+  useEffect(() => {
+    if (!user || !id) return;
+
+    const pingPresence = async () => {
+      const now = new Date().toISOString().replace('T', ' ');
+      try {
+        if (presenceRecordId.current) {
+          await pb.collection('presence').update(presenceRecordId.current, { last_seen: now });
+        } else {
+          // Check if record already exists for this user+event
+          const existing = await pb.collection('presence').getFirstListItem(
+            `id_evento = "${id}" && id_usuario = "${user.id}"`
+          ).catch(() => null);
+
+          if (existing) {
+            presenceRecordId.current = existing.id;
+            await pb.collection('presence').update(existing.id, { last_seen: now });
+          } else {
+            const rec = await pb.collection('presence').create({
+              id_evento: id,
+              id_usuario: user.id,
+              nombre: user.name || user.email.split('@')[0],
+              last_seen: now,
+            });
+            presenceRecordId.current = rec.id;
+          }
+        }
+      } catch (_) {}
+    };
+
+    // Load initial presence for this event
+    const loadPresence = async () => {
+      try {
+        const records = await pb.collection('presence').getFullList({
+          filter: `id_evento = "${id}"`,
+        });
+        const map = {};
+        records.forEach(r => { map[r.id_usuario] = r.last_seen; });
+        setOnlineUsers(map);
+      } catch (_) {}
+    };
+
+    pingPresence();
+    loadPresence();
+    heartbeatRef.current = setInterval(pingPresence, 30000);
+
+    // Realtime subscription
+    pb.collection('presence').subscribe('*', (e) => {
+      if (e.record.id_evento !== id) return;
+      setOnlineUsers(prev => ({ ...prev, [e.record.id_usuario]: e.record.last_seen }));
+    }).catch(() => {});
+
+    return () => {
+      clearInterval(heartbeatRef.current);
+      pb.collection('presence').unsubscribe('*');
+      // Mark offline by deleting presence record
+      if (presenceRecordId.current) {
+        pb.collection('presence').delete(presenceRecordId.current).catch(() => {});
+        presenceRecordId.current = null;
+      }
+    };
+  }, [id, user]);
 
   useEffect(() => {
     if (participants.length > 0) {
@@ -273,11 +340,18 @@ export default function EventDetail() {
                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500">Participantes</span>
                 <div className="flex items-center gap-1 mt-0.5">
                    <div className="flex -space-x-1.5">
-                      {participants.slice(0, 3).map(p => (
-                         <div key={p.id} className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[9px] font-black text-slate-500">
-                            {p.nombre[0].toUpperCase()}
-                         </div>
-                      ))}
+                      {participants.slice(0, 3).map(p => {
+                        const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
+                        const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
+                        return (
+                          <div key={p.id} className="relative">
+                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[9px] font-black text-slate-500">
+                               {p.nombre[0].toUpperCase()}
+                            </div>
+                            {online && <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-900" />}
+                          </div>
+                        );
+                      })}
                    </div>
                    <span className="text-xs font-black dark:text-white ml-1">{participants.length}</span>
                 </div>
@@ -301,10 +375,18 @@ export default function EventDetail() {
               <Users className="text-indigo-500" size={14} /> Colaboradores
            </h3>
            <div className="flex flex-wrap gap-2">
-              {participants.map(p => (
+              {participants.map(p => {
+                const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
+                const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
+                return (
                 <div key={p.id} className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-gray-800/50 rounded-xl border border-slate-100 dark:border-gray-700">
-                   <div className="w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px] shrink-0">
-                      {p.nombre[0].toUpperCase()}
+                   <div className="relative shrink-0">
+                      <div className="w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px]">
+                         {p.nombre[0].toUpperCase()}
+                      </div>
+                      {online && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800 animate-pulse" title="Online" />
+                      )}
                    </div>
                    <span className="text-xs font-black dark:text-white">{p.nombre}</span>
                    <button
@@ -319,7 +401,8 @@ export default function EventDetail() {
                       <X size={10} />
                    </button>
                 </div>
-              ))}
+                );
+              })}
               <button
                 onClick={() => setModals({...modals, invite: true})}
                 className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-slate-300 dark:border-gray-700 rounded-xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-[10px] tracking-widest"
