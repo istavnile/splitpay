@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [modalVisible, setModalVisible] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [newEventName, setNewEventName] = useState('');
+  const [newEventDate, setNewEventDate] = useState('');
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   const navigate = useNavigate();
@@ -140,10 +141,13 @@ export default function Dashboard() {
     if (!newEventName.trim()) return;
     setCreating(true);
     try {
+      const now = new Date().toISOString().replace('T', ' ');
       const data = {
         nombre_evento: newEventName.trim(),
         creado_por: user.id,
         moneda: user.moneda_preferida || '$',
+        fecha_creacion: now,
+        ...(newEventDate ? { fecha_evento: new Date(newEventDate).toISOString().replace('T', ' ') } : {}),
       };
       const record = await pb.collection('events').create(data);
       
@@ -159,6 +163,7 @@ export default function Dashboard() {
       setEvents([record, ...events]);
       setModalVisible(false);
       setNewEventName('');
+      setNewEventDate('');
       navigate(`/event/${record.id}`);
     } catch (err) {
       alert('Error al crear: ' + err.message);
@@ -289,7 +294,11 @@ export default function Dashboard() {
                     <h3 className="text-base md:text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase leading-tight">{event.nombre_evento}</h3>
                     <div className="flex items-center gap-2 mt-1 md:mt-2">
                        <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-                          {event.created ? new Date(event.created).toLocaleDateString() : 'Sin fecha'}
+                          {event.fecha_evento
+                            ? new Date(event.fecha_evento).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : event.fecha_creacion
+                            ? new Date(event.fecha_creacion).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : 'Sin fecha'}
                        </p>
                        {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
                     </div>
@@ -325,15 +334,26 @@ export default function Dashboard() {
                    <Plus size={24} className="rotate-45" />
                 </button>
              </div>
-             <form onSubmit={handleCreateEvent} className="space-y-8">
-                <Input 
-                  label="Nombre del Proyecto" 
-                  placeholder="Ej: Viaje a París, Cena Equipos..." 
+             <form onSubmit={handleCreateEvent} className="space-y-6">
+                <Input
+                  label="Nombre del Proyecto"
+                  placeholder="Ej: Viaje a París, Cena Equipos..."
                   value={newEventName}
                   onChange={(e) => setNewEventName(e.target.value)}
                   autoFocus
                   required
                 />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">
+                    Fecha del evento <span className="normal-case font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={newEventDate}
+                    onChange={(e) => setNewEventDate(e.target.value)}
+                    className="w-full h-11 px-4 rounded-2xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-bold dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
                 <div className="flex flex-col gap-3">
                    <Button className="py-4 h-auto rounded-2xl font-bold shadow-xl shadow-emerald-500/20" type="submit" disabled={creating}>
                      {creating ? 'Generando Universo...' : 'Crear Evento'}

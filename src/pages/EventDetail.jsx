@@ -311,7 +311,26 @@ export default function EventDetail() {
                     <div className="min-w-0">
                         <h1 className="text-2xl md:text-5xl font-black text-white tracking-tighter uppercase leading-none truncate">{event?.nombre_evento || 'Cargando...'}</h1>
                         <p className="text-emerald-100/70 text-[9px] font-black uppercase tracking-[0.25em] mt-1.5 flex items-center gap-2 flex-wrap">
-                           <Calendar size={10} /> {event?.created ? new Date(event.created).toLocaleDateString() : 'Sincronizando...'}
+                           <Calendar size={10} />
+                           {event?.creado_por === user.id ? (
+                             <input
+                               type="date"
+                               value={event?.fecha_evento ? event.fecha_evento.split(' ')[0] : event?.fecha_creacion ? event.fecha_creacion.split(' ')[0] : ''}
+                               onChange={async (e) => {
+                                 const val = e.target.value;
+                                 const iso = val ? new Date(val).toISOString().replace('T', ' ') : '';
+                                 setEvent(prev => ({ ...prev, fecha_evento: iso }));
+                                 try { await pb.collection('events').update(id, { fecha_evento: iso }); } catch (_) {}
+                               }}
+                               className="bg-transparent border-b border-emerald-300/40 text-emerald-100/70 text-[9px] font-black uppercase tracking-[0.25em] focus:outline-none focus:border-emerald-300 cursor-pointer"
+                             />
+                           ) : (
+                             event?.fecha_evento
+                               ? new Date(event.fecha_evento).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                               : event?.fecha_creacion
+                               ? new Date(event.fecha_creacion).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                               : 'Sin fecha'
+                           )}
                            <span className="opacity-30">|</span>
                            <span className="text-emerald-300">Evento Activo ({moneda})</span>
                         </p>
