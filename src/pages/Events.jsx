@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import pb from '../lib/pocketbase';
+import { getEventColorTw } from '../utils/eventColor';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/UI';
 import { Calendar, ChevronRight, TrendingUp, Users, Wallet } from 'lucide-react';
@@ -26,16 +27,23 @@ export default function Events() {
       let sharedRecords = [];
       try {
         const memberships = await pb.collection('members').getFullList({
-          filter: `id_usuario = "${user.id}"`,
+          filter: `id_usuario = "${user.id}" || email = "${user.email}"`,
           expand: 'id_evento',
         });
+        memberships.filter(m => !m.id_usuario && m.email === user.email)
+          .forEach(m => pb.collection('members').update(m.id, { id_usuario: user.id }).catch(() => {}));
         sharedRecords = memberships
           .filter(m => m.id_evento && m.expand?.id_evento && m.expand.id_evento.creado_por !== user.id)
           .map(m => m.expand.id_evento);
       } catch (err) {}
 
-      console.log(`Events page: ${ownedRecords.length} owned, ${sharedRecords.length} shared`);
-      setEvents([...ownedRecords, ...sharedRecords]);
+      const seen = new Set();
+      const allEvents = [...ownedRecords, ...sharedRecords].filter(e => {
+        if (seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
+      setEvents(allEvents);
     } catch (err) {
       console.error('Error fetching events:', err);
     } finally {
@@ -43,17 +51,6 @@ export default function Events() {
     }
   };
 
-  const getEventColor = (index) => {
-    const colors = [
-      'from-emerald-500 to-teal-500',
-      'from-indigo-500 to-blue-600',
-      'from-rose-500 to-pink-600',
-      'from-amber-600 to-orange-600',
-      'from-purple-500 to-violet-600',
-      'from-cyan-500 to-blue-500'
-    ];
-    return colors[index % colors.length];
-  };
 
   if (authLoading) {
     return (
@@ -83,13 +80,13 @@ export default function Events() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-white">
-          {events.map((event, index) => (
+          {events.map((event) => (
             <Link 
               key={event.id} 
               to={`/event/${event.id}`}
               className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
-              <div className={`h-28 bg-gradient-to-br ${getEventColor(index)} relative flex items-center justify-between px-8`}>
+              <div className={`h-28 bg-gradient-to-br ${getEventColorTw(event.id)} relative flex items-center justify-between px-8`}>
                   <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-2xl shadow-lg">
                     {event.nombre_evento?.[0]?.toUpperCase()}
