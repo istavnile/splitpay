@@ -184,26 +184,44 @@ export default function EventDetail() {
     e.preventDefault();
     if (!inviteEmail) return;
     setInviting(true);
+    const email = inviteEmail.toLowerCase().trim();
     try {
-      await pb.collection('members').create({
-        id_evento: id,
-        email: inviteEmail.toLowerCase().trim(),
-        rol: 'editor'
-      });
+      // Evitar duplicados: verificar si ya existe este miembro en el evento
+      const existing = await pb.collection('members').getFirstListItem(
+        `id_evento = "${id}" && email = "${email}"`
+      ).catch(() => null);
 
-      const nameFromEmail = inviteEmail.split('@')[0];
-      await pb.collection('participants').create({
-        id_evento: id,
-        nombre: nameFromEmail,
-        email: inviteEmail.toLowerCase().trim(),
-        creado_por: user.id
-      });
+      if (existing) {
+        setStatus({
+          isOpen: true,
+          type: 'error',
+          title: 'Ya está invitado',
+          message: `${email} ya es colaborador de este evento.`
+        });
+        setInviting(false);
+        return;
+      }
+
+      await pb.collection('members').create({ id_evento: id, email, rol: 'editor' });
+
+      const alreadyParticipant = await pb.collection('participants').getFirstListItem(
+        `id_evento = "${id}" && email = "${email}"`
+      ).catch(() => null);
+
+      if (!alreadyParticipant) {
+        await pb.collection('participants').create({
+          id_evento: id,
+          nombre: email.split('@')[0],
+          email,
+          creado_por: user.id
+        });
+      }
 
       setStatus({
         isOpen: true,
         type: 'success',
         title: 'Invitación Enviada',
-        message: `Se ha invitado a ${inviteEmail} a colaborar en este evento.`
+        message: `Se ha invitado a ${email} a colaborar en este evento.`
       });
       setInviteEmail('');
       setModals({ ...modals, invite: false });

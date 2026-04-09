@@ -67,7 +67,12 @@ export default function Dashboard() {
         console.warn('Members collection might not exist yet:', err.message);
       }
 
-      const allEvents = [...ownedRecords, ...sharedRecords];
+      const seen = new Set();
+      const allEvents = [...ownedRecords, ...sharedRecords].filter(e => {
+        if (seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
       setEvents(allEvents);
 
       // 3. Simple Stats Calculation
