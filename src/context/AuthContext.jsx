@@ -23,7 +23,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const authData = await pb.collection('users').authWithPassword(email, password);
+    // Sync real name into all participant records that used this email as alias
+    syncParticipantName(authData.record).catch(() => {});
     return authData;
+  };
+
+  const syncParticipantName = async (userRecord) => {
+    const realName = userRecord.name || userRecord.email.split('@')[0];
+    const stale = await pb.collection('participants').getFullList({
+      filter: `email = "${userRecord.email.toLowerCase()}" && nombre != "${realName}"`,
+    });
+    await Promise.all(stale.map(p => pb.collection('participants').update(p.id, { nombre: realName })));
   };
 
   const register = async (email, password, name) => {
