@@ -271,6 +271,7 @@ export default function Dashboard() {
                   <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-xl md:text-2xl shadow-lg">
                     {event.nombre_evento?.[0]?.toUpperCase()}
                   </div>
+                  {event.creado_por === user.id && (
                   <div className="flex gap-2 relative z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                      <button
                        onClick={(e) => archiveEvent(e, event.id, event.archivado)}
@@ -287,6 +288,7 @@ export default function Dashboard() {
                         <Trash2 size={16} />
                      </button>
                   </div>
+                  )}
               </div>
 
               <div className="p-4 md:p-8 md:pt-6 flex-1 bg-white dark:bg-gray-900">
