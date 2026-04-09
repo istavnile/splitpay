@@ -176,24 +176,29 @@ export default function Members() {
     setInvitingContact(null); // Close modal
     
     try {
-      // 1. Check if user exists or create placeholder
-      let userId;
+      // 1. Try to create placeholder user first
       try {
-        const existing = await pb.collection('users').getFirstListItem(`email="${contact.email}"`);
-        userId = existing.id;
-      } catch (e) {
-        // Create placeholder user so we can send verification
         const randomPass = Math.random().toString(36).slice(-10) + "Aa1!";
-        const newUser = await pb.collection('users').create({
+        await pb.collection('users').create({
           email: contact.email,
           password: randomPass,
           passwordConfirm: randomPass,
           name: contact.nombre
         });
-        userId = newUser.id;
+      } catch (createErr) {
+        // If it fails because user already exists (unique constraint), that's fine.
+        // We'll still proceed to request verification.
+        const errorData = JSON.stringify(createErr.data || {}).toLowerCase();
+        const isUniqueError = createErr.status === 400 && (
+          errorData.includes('unique') || 
+          errorData.includes('already exists') ||
+          createErr.message?.toLowerCase().includes('unique')
+        );
+        
+        if (!isUniqueError) throw createErr; // If it's another error (e.g. invalid email), bail
       }
 
-      // 2. Trigger the premium branded email
+      // 2. Trigger the premium branded email (works for both new and existing users)
       await pb.collection('users').requestVerification(contact.email);
 
       setStatus({
