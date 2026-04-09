@@ -5,6 +5,7 @@ import { Button, Input, Card } from '../components/UI';
 import { LogIn, UserPlus, Fingerprint, Sun, Moon, Info, HelpCircle, ChevronDown, CheckCircle2, ShieldCheck, Globe, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
+import pb from '../lib/pocketbase';
 
 const FAQItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,9 +56,14 @@ export default function Login() {
       console.error('Auth error:', err);
       let msg = err.message || 'Error en la operación';
       
-      // Handle "Email already exists" specially
+      // Handle "Email already exists" specially (Invited users flow)
       if (msg.toLowerCase().includes('unique') || (err.data && JSON.stringify(err.data).toLowerCase().includes('unique'))) {
-        msg = 'Este correo ya está registrado. Si recibiste una invitación, intenta iniciar sesión o recupera tu clave.';
+        try {
+          await pb.collection('users').requestPasswordReset(email);
+          msg = '¡Te encontramos! Ya tenías una invitación de SplitPay. Te acabamos de enviar un enlace a tu correo para que elijas tu contraseña e ingreses ahora mismo.';
+        } catch (resetErr) {
+          msg = 'Este correo ya está registrado. Intenta iniciar sesión o recuperar tu clave.';
+        }
       } else if (msg.includes('Failed to create record')) {
         msg = 'La cuenta ya existe o los datos son inválidos. Intenta iniciar sesión.';
       }
@@ -124,10 +130,10 @@ export default function Login() {
       {/* Right Column: Auth Form */}
       <section className="lg:col-span-5 flex items-center justify-center p-8 lg:p-20 relative pt-32 lg:pt-20">
         {/* Mobile Top Bar */}
-        <div className="absolute top-8 left-8 right-8 flex justify-between lg:hidden items-center">
+        <div className="absolute top-0 left-0 right-0 p-8 flex justify-between lg:hidden items-center bg-white/80 dark:bg-black/80 backdrop-blur-md z-50 border-b border-slate-100 dark:border-gray-900">
            <Logo size="sm" />
-           <Button variant="ghost" onClick={toggleTheme} className="rounded-2xl w-12 h-12 p-0 bg-slate-50 dark:bg-gray-900 border-none">
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+           <Button variant="ghost" onClick={toggleTheme} className="rounded-2xl w-10 h-10 p-0 bg-slate-50 dark:bg-gray-900 border-none">
+              {theme === 'dark' ? <Sun size={18} className="text-white" /> : <Moon size={18} />}
            </Button>
         </div>
 
