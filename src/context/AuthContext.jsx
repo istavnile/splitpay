@@ -9,15 +9,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check auth state on mount
-    setUser(pb.authStore.model);
+    const model = pb.authStore.model;
+    setUser(model);
     setIsValid(pb.authStore.isValid);
     setLoading(false);
 
-    // Listen to auth changes
+    // Sync name on every app load if already logged in
+    if (model) syncParticipantName(model).catch(() => {});
+
     return pb.authStore.onChange((token, model) => {
       setUser(model);
       setIsValid(!!token);
+      if (model) syncParticipantName(model).catch(() => {});
     });
   }, []);
 
