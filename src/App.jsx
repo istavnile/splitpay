@@ -8,6 +8,7 @@ import Settings from './pages/Settings';
 import Members from './pages/Members';
 import Activity from './pages/Activity';
 import Events from './pages/Events';
+import ResetPassword from './pages/ResetPassword';
 import MainLayout from './components/MainLayout';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={isValid ? <Navigate to="/" /> : <Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes (Wrapped in MainLayout) */}
         <Route element={isValid ? <MainLayout><Outlet /></MainLayout> : <Navigate to="/login" />}>
