@@ -161,10 +161,58 @@ export default function Members() {
     }
   };
 
-  const handleEmailInvite = (contact) => {
-    const subject = encodeURIComponent('¡Únete a mis proyectos en SplitPay!');
-    const body = encodeURIComponent(`¡Hola ${contact.nombre}! Te invito a usar SplitPay para gestionar nuestros gastos compartidos. \n\nRegístrate aquí: ${window.location.origin}`);
-    window.location.href = `mailto:${contact.email || ''}?subject=${subject}&body=${body}`;
+  const handleEmailInvite = async (contact) => {
+    if (!contact.email) {
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Falta Correo',
+        message: 'No se puede enviar invitación sin un correo electrónico válido.'
+      });
+      return;
+    }
+
+    setInviting(true);
+    setInvitingContact(null); // Close modal
+    
+    try {
+      // 1. Check if user exists or create placeholder
+      let userId;
+      try {
+        const existing = await pb.collection('users').getFirstListItem(`email="${contact.email}"`);
+        userId = existing.id;
+      } catch (e) {
+        // Create placeholder user so we can send verification
+        const randomPass = Math.random().toString(36).slice(-10) + "Aa1!";
+        const newUser = await pb.collection('users').create({
+          email: contact.email,
+          password: randomPass,
+          passwordConfirm: randomPass,
+          name: contact.nombre
+        });
+        userId = newUser.id;
+      }
+
+      // 2. Trigger the premium branded email
+      await pb.collection('users').requestVerification(contact.email);
+
+      setStatus({
+        isOpen: true,
+        type: 'success',
+        title: 'Invitación Enviada',
+        message: `Se ha enviado un correo automático a ${contact.nombre} a través de SplitPay.`
+      });
+    } catch (err) {
+      console.error('Error sending auto-invite:', err);
+      setStatus({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Envío',
+        message: 'No pudimos enviar el correo automático. Inténtalo de nuevo o configura el SMTP.'
+      });
+    } finally {
+      setInviting(false);
+    }
   };
 
   const handleWhatsAppInvite = (contact) => {
@@ -428,17 +476,25 @@ export default function Members() {
                 <div className="grid grid-cols-2 gap-4">
                     <button 
                         onClick={() => handleWhatsAppInvite(invitingContact)}
-                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 dark:bg-emerald-500/5 rounded-3xl border border-emerald-100 dark:border-emerald-500/20 hover:bg-emerald-500 hover:text-white group transition-all"
+                        disabled={inviting}
+                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 dark:bg-emerald-500/5 rounded-3xl border border-emerald-100 dark:border-emerald-500/20 hover:bg-emerald-500 hover:text-white group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <MessageCircle size={32} className="text-emerald-500 group-hover:text-white" />
                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">WhatsApp</span>
                     </button>
                     <button 
                         onClick={() => handleEmailInvite(invitingContact)}
-                        className="flex flex-col items-center gap-3 p-6 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white group transition-all"
+                        disabled={inviting}
+                        className="flex flex-col items-center gap-3 p-6 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-500 hover:text-white group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Send size={32} className="text-indigo-500 group-hover:text-white" />
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">Correo</span>
+                        {inviting ? (
+                          <div className="w-8 h-8 border-2 border-indigo-500 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                          <Send size={32} className="text-indigo-500 group-hover:text-white" />
+                        )}
+                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                          {inviting ? 'Enviando...' : 'Email Auto'}
+                        </span>
                     </button>
                 </div>
 
