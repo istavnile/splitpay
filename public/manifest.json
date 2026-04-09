@@ -1,25 +1,30 @@
 {
+  "name": "SplitPay — Divide gastos con amigos",
   "short_name": "SplitPay",
-  "name": "SplitPay - Gastos para Grupos",
+  "description": "Registra gastos, invita colaboradores y SplitPay calcula automáticamente quién le debe cuánto a quién.",
   "icons": [
     {
       "src": "/favicon.png",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
       "src": "/icon.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "theme_color": "#10b981",
-  "background_color": "#000000"
+  "background_color": "#030712",
+  "categories": ["finance", "utilities"]
 }
