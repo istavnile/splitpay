@@ -249,18 +249,13 @@ export default function EventDetail() {
   };
 
   const toggleCurrency = async (newMoneda) => {
-    // Save to localStorage immediately so it persists regardless of PocketBase schema
     localStorage.setItem(`event_moneda_${id}`, newMoneda);
     setEvent(prev => ({ ...prev, moneda: newMoneda }));
-    try {
-      await pb.collection('events').update(id, { moneda: newMoneda });
-    } catch (err) {
-      setStatus({
-        isOpen: true,
-        type: 'error',
-        title: 'Error de Ajuste',
-        message: 'No se pudo cambiar la moneda: ' + err.message
-      });
+    // Solo el creador puede persistir la moneda en el servidor
+    if (event?.creado_por === user.id) {
+      try {
+        await pb.collection('events').update(id, { moneda: newMoneda });
+      } catch (_) {}
     }
   };
 
