@@ -53,6 +53,13 @@ export default function Dashboard() {
           filter: `id_usuario = "${user.id}" || email = "${user.email}"`,
           expand: 'id_evento',
         });
+
+        // Auto-patch member records found by email that are missing id_usuario
+        const toFix = memberships.filter(m => !m.id_usuario && m.email === user.email);
+        for (const m of toFix) {
+          pb.collection('members').update(m.id, { id_usuario: user.id }).catch(() => {});
+        }
+
         sharedRecords = memberships
           .filter(m => m.id_evento && m.expand?.id_evento && m.expand.id_evento.creado_por !== user.id)
           .map(m => m.expand.id_evento);
