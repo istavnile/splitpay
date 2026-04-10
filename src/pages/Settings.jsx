@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
 import { Button, Card, Input, StatusModal } from '../components/UI';
-import { User, Camera, Lock, Mail, Shield, Smartphone, Globe, Bell, Check, X } from 'lucide-react';
+import { User, Camera, Lock, Shield, Smartphone, Globe, Bell } from 'lucide-react';
+import AvatarCropper from '../components/AvatarCropper';
 
 export default function Settings() {
   const { user, refresh, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [cropFile, setCropFile] = useState(null);   // raw file waiting to be cropped
+  const [croppedBlob, setCroppedBlob] = useState(null); // final blob ready to upload
   const [formData, setFormData] = useState({
     name: user?.name || '',
     username: user?.username || '',
@@ -41,39 +44,42 @@ export default function Settings() {
     }
   }, [user]);
 
+  // Open cropper when user picks a file
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setAvatarPreview(URL.createObjectURL(file));
-    }
+    if (file) setCropFile(file);
+    // Reset input so re-selecting the same file triggers onChange again
+    e.target.value = '';
+  };
+
+  // Called by AvatarCropper on confirm
+  const handleCropConfirm = (blob, previewUrl) => {
+    setCroppedBlob(blob);
+    setAvatarPreview(previewUrl);
+    setCropFile(null);
   };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = new FormData();
-      data.append('name', formData.name);
-      data.append('username', formData.username);
-      data.append('moneda_preferida', formData.moneda_preferida);
-
-      const avatarFile = document.getElementById('avatar-input').files[0];
-      if (avatarFile) {
-        data.append('avatar', avatarFile);
+      let updateData;
+      if (croppedBlob) {
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('username', formData.username);
+        data.append('moneda_preferida', formData.moneda_preferida);
+        data.append('avatar', croppedBlob, 'avatar.jpg');
+        updateData = data;
+      } else {
+        updateData = { name: formData.name, moneda_preferida: formData.moneda_preferida };
       }
-
-      // Use plain object if no file is being uploaded for improved reliability
-      const updateData = avatarFile 
-        ? data 
-        : {
-            name: formData.name,
-            moneda_preferida: formData.moneda_preferida
-          };
 
       const updated = await pb.collection('users').update(user.id, updateData);
       // Directly patch the authStore model so moneda_preferida persists on reload
       pb.authStore.save(pb.authStore.token, { ...pb.authStore.model, ...updated });
       await refresh();
+      setCroppedBlob(null);
       setStatus({
         isOpen: true,
         type: 'success',
@@ -275,9 +281,16 @@ export default function Settings() {
         </section>
 
       </div>
-      <StatusModal 
-        isOpen={status.isOpen} 
-        onClose={() => setStatus({...status, isOpen: false})} 
+      {cropFile && (
+        <AvatarCropper
+          file={cropFile}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
+      <StatusModal
+        isOpen={status.isOpen}
+        onClose={() => setStatus({...status, isOpen: false})}
         type={status.type}
         title={status.title}
         message={status.message}
