@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
 import { Button, Card, Input, StatusModal } from '../components/UI';
-import { User, Camera, Lock, Shield, Smartphone, Globe, Bell } from 'lucide-react';
+import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X } from 'lucide-react';
 import AvatarCropper from '../components/AvatarCropper';
 
 export default function Settings() {
@@ -24,6 +24,17 @@ export default function Settings() {
   });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
+  // Payment methods
+  const [payMethods, setPayMethods]       = useState([]);
+  const [savingPay, setSavingPay]         = useState(false);
+  const [newBank, setNewBank]             = useState({ banco: '', numero_cuenta: '', cci: '', moneda: 'SOL', alias: '' });
+  const [showBankForm, setShowBankForm]   = useState(false);
+
+  const phoneMethod   = payMethods.find(m => m.tipo === 'telefono');
+  const bankMethods   = payMethods.filter(m => m.tipo === 'banco');
+
+  const [phoneForm, setPhoneForm] = useState({ telefono: '', etiquetas: 'yape' });
+
   if (authLoading) {
     return (
       <div className="flex justify-center items-center py-20 min-h-[60vh]">
@@ -43,6 +54,79 @@ export default function Settings() {
       });
     }
   }, [user]);
+
+  // Load payment methods
+  useEffect(() => {
+    if (!user) return;
+    pb.collection('payment_methods')
+      .getFullList({ filter: `user_id = "${user.id}"`, sort: 'tipo,created' })
+      .then(rows => {
+        setPayMethods(rows);
+        const phone = rows.find(r => r.tipo === 'telefono');
+        if (phone) setPhoneForm({ telefono: phone.telefono || '', etiquetas: phone.etiquetas || 'yape' });
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const savePhone = async (e) => {
+    e.preventDefault();
+    if (!phoneForm.telefono.trim()) return;
+    setSavingPay(true);
+    try {
+      const existing = payMethods.find(m => m.tipo === 'telefono');
+      if (existing) {
+        const updated = await pb.collection('payment_methods').update(existing.id, {
+          telefono: phoneForm.telefono.trim(),
+          etiquetas: phoneForm.etiquetas,
+        });
+        setPayMethods(prev => prev.map(m => m.id === updated.id ? updated : m));
+      } else {
+        const created = await pb.collection('payment_methods').create({
+          user_id: user.id,
+          tipo: 'telefono',
+          telefono: phoneForm.telefono.trim(),
+          etiquetas: phoneForm.etiquetas,
+        });
+        setPayMethods(prev => [...prev, created]);
+      }
+      setStatus({ isOpen: true, type: 'success', title: 'Guardado', message: 'Número guardado correctamente.' });
+    } catch (err) {
+      setStatus({ isOpen: true, type: 'error', title: 'Error', message: err.message });
+    } finally {
+      setSavingPay(false);
+    }
+  };
+
+  const saveBank = async (e) => {
+    e.preventDefault();
+    if (!newBank.banco.trim() && !newBank.numero_cuenta.trim()) return;
+    setSavingPay(true);
+    try {
+      const created = await pb.collection('payment_methods').create({
+        user_id: user.id,
+        tipo: 'banco',
+        banco: newBank.banco.trim(),
+        numero_cuenta: newBank.numero_cuenta.trim(),
+        cci: newBank.cci.trim(),
+        moneda: newBank.moneda,
+        alias: newBank.alias.trim(),
+      });
+      setPayMethods(prev => [...prev, created]);
+      setNewBank({ banco: '', numero_cuenta: '', cci: '', moneda: 'SOL', alias: '' });
+      setShowBankForm(false);
+    } catch (err) {
+      setStatus({ isOpen: true, type: 'error', title: 'Error', message: err.message });
+    } finally {
+      setSavingPay(false);
+    }
+  };
+
+  const deletePayMethod = async (id) => {
+    try {
+      await pb.collection('payment_methods').delete(id);
+      setPayMethods(prev => prev.filter(m => m.id !== id));
+    } catch (_) {}
+  };
 
   // Open cropper when user picks a file
   const handleAvatarChange = (e) => {
@@ -244,6 +328,107 @@ export default function Settings() {
                    {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
                 </Button>
              </form>
+          </Card>
+        </section>
+
+        {/* Payment Methods Section */}
+        <section className="md:col-span-12 flex flex-col gap-6">
+          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
+              <CreditCard size={16} /> Datos de Pago
+            </h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Phone / Yape / Plin */}
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-4 flex items-center gap-2">
+                  <Phone size={13} /> Celular / Billetera Digital
+                </p>
+                <form onSubmit={savePhone} className="space-y-4">
+                  <Input
+                    label="Número de celular"
+                    placeholder="Ej: 987 654 321"
+                    value={phoneForm.telefono}
+                    onChange={e => setPhoneForm({ ...phoneForm, telefono: e.target.value })}
+                  />
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1 block mb-2">Disponible para</label>
+                    <div className="flex bg-slate-100 dark:bg-gray-800 rounded-xl p-1 w-fit gap-0.5">
+                      {[['yape', 'Yape'], ['plin', 'Plin'], ['ambos', 'Ambos']].map(([val, lbl]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setPhoneForm({ ...phoneForm, etiquetas: val })}
+                          className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${phoneForm.etiquetas === val ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={savingPay || !phoneForm.telefono.trim()} className="rounded-2xl px-6">
+                    {savingPay ? 'Guardando...' : phoneMethod ? 'Actualizar' : 'Guardar'}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Bank accounts */}
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-4 flex items-center gap-2">
+                  <Building2 size={13} /> Cuentas Bancarias
+                </p>
+
+                {/* Existing */}
+                <div className="space-y-2 mb-4">
+                  {bankMethods.map(m => (
+                    <div key={m.id} className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-slate-100 dark:border-gray-700">
+                      <div>
+                        <p className="text-xs font-black dark:text-white uppercase tracking-tight">{m.banco || 'Banco'} {m.alias ? <span className="font-normal text-slate-400 normal-case">· {m.alias}</span> : ''}</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">{m.numero_cuenta} {m.moneda ? `· ${m.moneda}` : ''}</p>
+                      </div>
+                      <button onClick={() => deletePayMethod(m.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors rounded-xl hover:bg-rose-500/10">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {showBankForm ? (
+                  <form onSubmit={saveBank} className="space-y-3 p-4 bg-slate-50 dark:bg-gray-800/50 rounded-2xl border border-slate-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nueva cuenta</p>
+                      <button type="button" onClick={() => setShowBankForm(false)} className="text-slate-400 hover:text-rose-500">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="Banco" placeholder="BCP, Interbank..." value={newBank.banco} onChange={e => setNewBank({ ...newBank, banco: e.target.value })} />
+                      <Input label="Alias (opcional)" placeholder="Principal, Ahorros..." value={newBank.alias} onChange={e => setNewBank({ ...newBank, alias: e.target.value })} />
+                    </div>
+                    <Input label="N° de Cuenta" placeholder="123-456789-0-12" value={newBank.numero_cuenta} onChange={e => setNewBank({ ...newBank, numero_cuenta: e.target.value })} />
+                    <Input label="CCI (opcional)" placeholder="00312312345678901234" value={newBank.cci} onChange={e => setNewBank({ ...newBank, cci: e.target.value })} />
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1 block mb-2">Moneda</label>
+                      <div className="flex bg-slate-100 dark:bg-gray-700 rounded-xl p-1 w-fit">
+                        {[['SOL', 'S/. SOL'], ['USD', '$ USD']].map(([val, lbl]) => (
+                          <button key={val} type="button" onClick={() => setNewBank({ ...newBank, moneda: val })}
+                            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${newBank.moneda === val ? 'bg-white dark:bg-gray-600 text-emerald-600 shadow-sm' : 'text-slate-400'}`}>
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <Button type="submit" disabled={savingPay} className="w-full rounded-2xl">
+                      {savingPay ? 'Guardando...' : 'Agregar Cuenta'}
+                    </Button>
+                  </form>
+                ) : (
+                  <button onClick={() => setShowBankForm(true)} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 dark:border-gray-700 rounded-2xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-xs tracking-widest w-full justify-center">
+                    <Plus size={14} /> Agregar Cuenta Bancaria
+                  </button>
+                )}
+              </div>
+            </div>
           </Card>
         </section>
 

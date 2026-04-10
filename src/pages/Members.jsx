@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Share2, Copy, MessageCircle, Send, Edit, RefreshCcw } from 'lucide-react';
+import { Users, Search, UserPlus, Mail, Globe, MessageSquare, Plus, X, Share2, Copy, MessageCircle, Send, Edit, RefreshCcw, Phone, Building2 } from 'lucide-react';
 import { Card, Button, Input, StatusModal } from '../components/UI';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
+import PaymentInfoPopup from '../components/PaymentInfoPopup';
 
 export default function Members() {
   const { user } = useAuth();
@@ -17,10 +18,29 @@ export default function Members() {
   const [invitingContact, setInvitingContact] = useState(null);
   const [newContact, setNewContact] = useState({ nombre: '', email: '' });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+  const [paymentInfo, setPaymentInfo] = useState(null); // { userId, name }
+  const [memberPayments, setMemberPayments] = useState({}); // userId -> [methods]
 
   useEffect(() => {
     fetchMembers();
   }, []);
+
+  // After members load, fetch payment badges for registered users
+  useEffect(() => {
+    const userIds = members.filter(m => m.userId).map(m => m.userId);
+    if (userIds.length === 0) return;
+    const filter = userIds.map(id => `user_id = "${id}"`).join(' || ');
+    pb.collection('payment_methods').getFullList({ filter })
+      .then(rows => {
+        const map = {};
+        rows.forEach(r => {
+          if (!map[r.user_id]) map[r.user_id] = [];
+          map[r.user_id].push(r);
+        });
+        setMemberPayments(map);
+      })
+      .catch(() => {});
+  }, [members]);
 
   const fetchMembers = async () => {
     try {
@@ -297,7 +317,12 @@ export default function Members() {
         </Card>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-           {filteredMembers.map((member, i) => (
+           {filteredMembers.map((member, i) => {
+              const pays = member.userId ? (memberPayments[member.userId] || []) : [];
+              const hasPhone = pays.some(m => m.tipo === 'telefono');
+              const hasBanks = pays.some(m => m.tipo === 'banco');
+              const phoneTag = pays.find(m => m.tipo === 'telefono')?.etiquetas;
+              return (
               <Card key={i} className="border-none shadow-sm shadow-indigo-500/5 dark:bg-gray-900/60 p-4 flex flex-col gap-3 group rounded-[1.5rem]" hover={true}>
                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
@@ -305,10 +330,26 @@ export default function Members() {
                     </div>
                     <div className="flex-1 min-w-0">
                        <h4 className="text-sm font-black dark:text-white truncate uppercase tracking-tight">{member.nombre}</h4>
-                       <p className="text-[9px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                          {member.isUser ? <Globe size={10} className="text-indigo-500" /> : <MessageSquare size={10} />}
-                          {member.isUser ? 'Verificado' : 'Local'}
-                       </p>
+                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                         <p className="text-[9px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                           {member.isUser ? <Globe size={10} className="text-indigo-500" /> : <MessageSquare size={10} />}
+                           {member.isUser ? 'Verificado' : 'Local'}
+                         </p>
+                         {hasPhone && (
+                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
+                             phoneTag === 'yape' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                             phoneTag === 'plin' ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400' :
+                             'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                           }`}>
+                             {phoneTag === 'ambos' ? 'Y+P' : phoneTag === 'yape' ? 'Yape' : 'Plin'}
+                           </span>
+                         )}
+                         {hasBanks && (
+                           <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                             Banco
+                           </span>
+                         )}
+                       </div>
                     </div>
                  </div>
 
@@ -317,9 +358,18 @@ export default function Members() {
                        {member.email || 'Sin correo'}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0">
+                       {member.userId && (hasPhone || hasBanks) && (
+                         <button
+                           onClick={() => setPaymentInfo({ userId: member.userId, name: member.nombre })}
+                           className="p-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100 dark:border-emerald-500/20"
+                           title="Ver datos de pago"
+                         >
+                           {hasPhone ? <Phone size={14} /> : <Building2 size={14} />}
+                         </button>
+                       )}
                        <button
-                         onClick={() => { 
-                           setEditingContact(member); 
+                         onClick={() => {
+                           setEditingContact(member);
                            setInviteEmail(member.email || '');
                            setEditingName(member.nombre);
                          }}
@@ -347,7 +397,8 @@ export default function Members() {
                     </div>
                  </div>
               </Card>
-           ))}
+              );
+           })}
         </div>
       )}
 
@@ -520,9 +571,16 @@ export default function Members() {
         </div>
       )}
 
-      <StatusModal 
-        isOpen={status.isOpen} 
-        onClose={() => setStatus({...status, isOpen: false})} 
+      {paymentInfo && (
+        <PaymentInfoPopup
+          userId={paymentInfo.userId}
+          name={paymentInfo.name}
+          onClose={() => setPaymentInfo(null)}
+        />
+      )}
+      <StatusModal
+        isOpen={status.isOpen}
+        onClose={() => setStatus({...status, isOpen: false})}
         type={status.type}
         title={status.title}
         message={status.message}

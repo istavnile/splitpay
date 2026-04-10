@@ -8,6 +8,7 @@ import { Card, Button, Input, ConfirmDialog, StatusModal, Toast } from '../compo
 import { calculateBalance } from '../utils/balanceEngine';
 import { generateReceipt } from '../utils/generateReceipt';
 import EventChat from '../components/EventChat';
+import PaymentInfoPopup from '../components/PaymentInfoPopup';
 import {
   ArrowLeft, Plus, UserPlus, Share2, Trash2,
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
@@ -90,6 +91,7 @@ export default function EventDetail() {
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
   const [onlineUsers, setOnlineUsers] = useState({});
+  const [paymentPopup, setPaymentPopup] = useState(null); // { userId, name }
   const presenceRecordId = useRef(null);
   const heartbeatRef = useRef(null);
 
@@ -564,14 +566,18 @@ export default function EventDetail() {
                 const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
                 return (
                 <div key={p.id} className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-gray-800/50 rounded-xl border border-slate-100 dark:border-gray-700">
-                   <div className="relative shrink-0">
-                      <div className="w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px]">
+                   <button
+                     className="relative shrink-0"
+                     title={p.id_usuario ? 'Ver datos de pago' : undefined}
+                     onClick={() => p.id_usuario && setPaymentPopup({ userId: p.id_usuario, name: p.nombre })}
+                   >
+                      <div className={`w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px] ${p.id_usuario ? 'hover:bg-indigo-500 hover:text-white transition-colors' : ''}`}>
                          {p.nombre[0].toUpperCase()}
                       </div>
                       {online && (
                         <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800 animate-pulse" title="Online" />
                       )}
-                   </div>
+                   </button>
                    <span className="text-xs font-black dark:text-white">{p.nombre}</span>
                    <button
                      onClick={() => setConfirmState({
@@ -963,6 +969,13 @@ export default function EventDetail() {
         type={toast.type}
         onClose={() => setToast({ ...toast, isOpen: false })}
       />
+      {paymentPopup && (
+        <PaymentInfoPopup
+          userId={paymentPopup.userId}
+          name={paymentPopup.name}
+          onClose={() => setPaymentPopup(null)}
+        />
+      )}
     </div>
   );
 }

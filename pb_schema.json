@@ -80,5 +80,25 @@
     "createRule": "@request.auth.id != ''",
     "updateRule": "@request.auth.id != '' && (emisor_id = @request.auth.id || receptor_id = @request.auth.id)",
     "deleteRule": "@request.auth.id != '' && (emisor_id = @request.auth.id || receptor_id = @request.auth.id)"
+  },
+  {
+    "name": "payment_methods",
+    "type": "base",
+    "listRule": "@request.auth.id = user_id",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id = user_id",
+    "deleteRule": "@request.auth.id = user_id",
+    "fields": [
+      { "name": "user_id",       "type": "relation", "required": true,  "collectionId": "_pb_users_auth_", "maxSelect": 1 },
+      { "name": "tipo",          "type": "select",   "required": true,  "values": ["telefono","banco"], "maxSelect": 1 },
+      { "name": "telefono",      "type": "text" },
+      { "name": "etiquetas",     "type": "select",   "values": ["yape","plin","ambos"], "maxSelect": 1 },
+      { "name": "banco",         "type": "text" },
+      { "name": "numero_cuenta", "type": "text" },
+      { "name": "cci",           "type": "text" },
+      { "name": "moneda",        "type": "select",   "values": ["SOL","USD"], "maxSelect": 1 },
+      { "name": "alias",         "type": "text" }
+    ]
   }
 ]
