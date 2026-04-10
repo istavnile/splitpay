@@ -3,18 +3,20 @@ import { getEventColorCss } from '../utils/eventColor';
 import { useParams, useNavigate } from 'react-router-dom';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationsContext';
 import { Card, Button, Input, ConfirmDialog, StatusModal, Toast } from '../components/UI';
 import { calculateBalance } from '../utils/balanceEngine';
-import { 
-  ArrowLeft, Plus, UserPlus, Share2, Trash2, 
+import {
+  ArrowLeft, Plus, UserPlus, Share2, Trash2,
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
-  Copy, Mail, ChevronRight, X, AlertCircle, Users, TrendingUp, Settings, Calendar,
-  Check
+  X, AlertCircle, Users, Calendar,
+  Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone
 } from 'lucide-react';
 
 export default function EventDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { sendMessage } = useNotifications();
   const navigate = useNavigate();
 
   const [event, setEvent] = useState(null);
@@ -23,20 +25,26 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [addingExpense, setAddingExpense] = useState(false);
   const [inviting, setInviting] = useState(false);
-  
+
+  // Payment status
+  const [paymentStatuses, setPaymentStatuses] = useState([]);
+  // Users to message (all members except current user)
+  const [messageTargets, setMessageTargets] = useState([]); // [{id, nombre}]
+  const [sendingQuickMsg, setSendingQuickMsg] = useState(false);
+
   // Form State
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [payerId, setPayerId] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  
+
   const [modals, setModals] = useState({ invite: false, settings: false });
   const [balance, setBalance] = useState({ transferencias: [], summary: [], text: '', total: 0 });
   const [copied, setCopied] = useState(false);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
   const [status, setStatus] = useState({ isOpen: false, type: 'success', title: '', message: '' });
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
-  const [onlineUsers, setOnlineUsers] = useState({}); // { id_usuario: last_seen ISO string }
+  const [onlineUsers, setOnlineUsers] = useState({});
   const presenceRecordId = useRef(null);
   const heartbeatRef = useRef(null);
 
@@ -54,7 +62,6 @@ export default function EventDetail() {
         if (presenceRecordId.current) {
           await pb.collection('presence').update(presenceRecordId.current, { last_seen: now });
         } else {
-          // Check if record already exists for this user+event
           const existing = await pb.collection('presence').getFirstListItem(
             `id_evento = "${id}" && id_usuario = "${user.id}"`
           ).catch(() => null);
@@ -75,7 +82,6 @@ export default function EventDetail() {
       } catch (_) {}
     };
 
-    // Load initial presence for this event
     const loadPresence = async () => {
       try {
         const records = await pb.collection('presence').getFullList({
@@ -91,7 +97,6 @@ export default function EventDetail() {
     loadPresence();
     heartbeatRef.current = setInterval(pingPresence, 30000);
 
-    // Realtime subscription
     pb.collection('presence').subscribe('*', (e) => {
       if (e.record.id_evento !== id) return;
       setOnlineUsers(prev => ({ ...prev, [e.record.id_usuario]: e.record.last_seen }));
@@ -100,7 +105,6 @@ export default function EventDetail() {
     return () => {
       clearInterval(heartbeatRef.current);
       pb.collection('presence').unsubscribe('*');
-      // Mark offline by deleting presence record
       if (presenceRecordId.current) {
         pb.collection('presence').delete(presenceRecordId.current).catch(() => {});
         presenceRecordId.current = null;
@@ -125,8 +129,7 @@ export default function EventDetail() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const eventData = await pb.collection('events').getOne(id);
-      // Prefer PocketBase moneda, fall back to localStorage, then '$'
+      const eventData = await pb.collection('events').getOne(id, { expand: 'creado_por' });
       if (!eventData.moneda) {
         eventData.moneda = localStorage.getItem(`event_moneda_${id}`) || '$';
       }
@@ -143,6 +146,45 @@ export default function EventDetail() {
         expand: 'pagado_por',
       });
       setExpenses(expensesData);
+
+      // Load payment statuses
+      const psData = await pb.collection('payment_status').getFullList({
+        filter: `id_evento = "${id}"`,
+      }).catch(() => []);
+      setPaymentStatuses(psData);
+
+      // Build message targets: all members of this event except current user
+      const membersData = await pb.collection('members').getFullList({
+        filter: `id_evento = "${id}"`,
+        expand: 'id_usuario',
+      }).catch(() => []);
+
+      const targets = [];
+      const seen = new Set([user.id]);
+
+      // Event creator (if not current user)
+      if (eventData.creado_por && eventData.creado_por !== user.id) {
+        const creatorName = eventData.expand?.creado_por?.name
+          || eventData.expand?.creado_por?.email?.split('@')[0]
+          || 'Organizador';
+        targets.push({ id: eventData.creado_por, nombre: creatorName });
+        seen.add(eventData.creado_por);
+      }
+
+      // Members with linked accounts
+      membersData.forEach(m => {
+        const uid = m.id_usuario;
+        if (uid && !seen.has(uid)) {
+          const memberName = m.expand?.id_usuario?.name
+            || m.expand?.id_usuario?.email?.split('@')[0]
+            || m.email?.split('@')[0]
+            || 'Colaborador';
+          targets.push({ id: uid, nombre: memberName });
+          seen.add(uid);
+        }
+      });
+
+      setMessageTargets(targets);
     } catch (err) {
       console.error(err);
       navigate('/');
@@ -164,7 +206,7 @@ export default function EventDetail() {
         creado_por: user.id,
         estado: 'activo',
       };
-      const record = await pb.collection('expenses').create(data, { expand: 'pagado_por' });
+      await pb.collection('expenses').create(data, { expand: 'pagado_por' });
       setToast({ isOpen: true, message: `"${description}" — ${moneda}${parseFloat(amount).toFixed(2)}`, type: 'success' });
       setAmount('');
       setDescription('');
@@ -187,7 +229,6 @@ export default function EventDetail() {
     setInviting(true);
     const email = inviteEmail.toLowerCase().trim();
     try {
-      // Evitar duplicados: verificar si ya existe este miembro en el evento
       const existing = await pb.collection('members').getFirstListItem(
         `id_evento = "${id}" && email = "${email}"`
       ).catch(() => null);
@@ -270,7 +311,6 @@ export default function EventDetail() {
   const toggleCurrency = async (newMoneda) => {
     localStorage.setItem(`event_moneda_${id}`, newMoneda);
     setEvent(prev => ({ ...prev, moneda: newMoneda }));
-    // Solo el creador puede persistir la moneda en el servidor
     if (event?.creado_por === user.id) {
       try {
         await pb.collection('events').update(id, { moneda: newMoneda });
@@ -284,6 +324,72 @@ export default function EventDetail() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // ── Payment Status ──────────────────────────────────────────────────────────
+  const myParticipant = participants.find(p => p.id_usuario === user?.id);
+
+  const getPaymentStatus = (deId, paraId) =>
+    paymentStatuses.find(ps => ps.id_pagador === deId && ps.id_receptor === paraId);
+
+  const confirmPayment = async (transfer) => {
+    const existing = getPaymentStatus(transfer.deId, transfer.paraId);
+    if (existing) return;
+    try {
+      const ps = await pb.collection('payment_status').create({
+        id_evento: id,
+        id_pagador: transfer.deId,
+        id_receptor: transfer.paraId,
+        monto: transfer.monto,
+        creado_por: user.id,
+      });
+      setPaymentStatuses(prev => [...prev, ps]);
+
+      // Notify the receptor (if they have a user account)
+      const receptorParticipant = participants.find(p => p.id === transfer.paraId);
+      if (receptorParticipant?.id_usuario) {
+        const moneda = event?.moneda || '$';
+        await sendMessage(
+          receptorParticipant.id_usuario,
+          'pago_confirmado',
+          `confirmó que te transfirió ${moneda}${transfer.monto.toFixed(2)}`,
+          id
+        );
+      }
+
+      setToast({ isOpen: true, message: `Pago confirmado — ${moneda}${transfer.monto.toFixed(2)}`, type: 'success' });
+    } catch (err) {
+      setStatus({ isOpen: true, type: 'error', title: 'Error', message: err.message });
+    }
+  };
+
+  const cancelPayment = async (transfer) => {
+    const existing = getPaymentStatus(transfer.deId, transfer.paraId);
+    if (!existing) return;
+    try {
+      await pb.collection('payment_status').delete(existing.id);
+      setPaymentStatuses(prev => prev.filter(ps => ps.id !== existing.id));
+      setToast({ isOpen: true, message: 'Confirmación cancelada', type: 'info' });
+    } catch (err) {
+      setStatus({ isOpen: true, type: 'error', title: 'Error', message: err.message });
+    }
+  };
+
+  // ── Quick Messages ──────────────────────────────────────────────────────────
+  const sendQuickMessage = async (tipo, contenido) => {
+    if (messageTargets.length === 0) {
+      setToast({ isOpen: true, message: 'No hay colaboradores para notificar', type: 'info' });
+      return;
+    }
+    setSendingQuickMsg(true);
+    try {
+      await Promise.all(messageTargets.map(t => sendMessage(t.id, tipo, contenido, id)));
+      setToast({ isOpen: true, message: `Notificación enviada a ${messageTargets.length} colaborador${messageTargets.length > 1 ? 'es' : ''}`, type: 'success' });
+    } catch (_) {
+      setToast({ isOpen: true, message: 'Error al enviar notificación', type: 'error' });
+    } finally {
+      setSendingQuickMsg(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
        <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
@@ -295,7 +401,7 @@ export default function EventDetail() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      
+
       {/* Event Header Card */}
       <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem]" hover={false}>
           <div style={{ background: getEventColorCss(id) }} className="p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
@@ -399,10 +505,10 @@ export default function EventDetail() {
           </div>
       </Card>
 
-      {/* Flat grid — each card has its own order for mobile and lg:col-start for desktop */}
+      {/* Flat grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 lg:items-start">
 
-        {/* 1. Colaboradores — mobile 1st, desktop right col 3rd */}
+        {/* 1. Colaboradores */}
         <Card className="order-1 lg:col-start-9 lg:col-span-4 lg:row-start-3 border-none shadow-sm dark:bg-gray-900/50 p-4 md:p-6 rounded-[2rem]" hover={false}>
            <h3 className="text-xs font-black dark:text-white mb-3 tracking-tight flex items-center gap-2 uppercase">
               <Users className="text-indigo-500" size={14} /> Colaboradores
@@ -445,7 +551,7 @@ export default function EventDetail() {
            </div>
         </Card>
 
-        {/* 2. Registrar Gasto — mobile 2nd, desktop right col 1st */}
+        {/* 2. Registrar Gasto */}
         <Card className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 border-none shadow-xl shadow-emerald-500/10 bg-emerald-500 text-white p-5 md:p-8 rounded-[2rem]" hover={false}>
            <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-5 md:mb-8 flex items-center gap-2">
               <Plus className="text-emerald-200" /> Registrar Gasto
@@ -503,7 +609,7 @@ export default function EventDetail() {
            </form>
         </Card>
 
-        {/* 3. Historial de Gastos — mobile 3rd, desktop left col */}
+        {/* 3. Historial de Gastos */}
         <Card className="order-3 lg:col-start-1 lg:col-span-8 lg:row-start-1 lg:row-span-3 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
            <div className="flex items-center justify-between mb-5 md:mb-8">
               <h3 className="text-base font-black dark:text-white tracking-tight flex items-center gap-2 uppercase">
@@ -551,7 +657,7 @@ export default function EventDetail() {
            )}
         </Card>
 
-        {/* 4. Ajuste de Cuentas — mobile 4th, desktop right col 2nd */}
+        {/* 4. Ajuste de Cuentas */}
         <Card className="order-4 lg:col-start-9 lg:col-span-4 lg:row-start-2 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8 rounded-[2rem]" hover={false}>
            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-5 md:mb-8 flex items-center gap-2">
               <ArrowRightLeft size={16} /> Ajuste de Cuentas
@@ -565,16 +671,78 @@ export default function EventDetail() {
              </div>
            ) : (
              <div className="space-y-4">
-                {balance.transferencias.map((t, i) => (
-                  <div key={i} className="group p-4 bg-slate-50 dark:bg-gray-800/20 rounded-2xl border border-slate-50 dark:border-gray-800 hover:border-emerald-500/30 transition-all">
-                     <div className="flex items-center justify-between mb-2 text-emerald-500">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500">{t.de}</span>
-                        <ArrowLeft size={14} className="rotate-180" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{t.para}</span>
-                     </div>
-                     <span className="text-2xl font-black dark:text-white tracking-tighter">{moneda}{t.monto.toFixed(2)}</span>
+                {balance.transferencias.map((t, i) => {
+                  const ps = getPaymentStatus(t.deId, t.paraId);
+                  const isPaid = !!ps;
+                  const isMyTransfer = myParticipant && t.deId === myParticipant.id;
+                  const isMyReceivable = myParticipant && t.paraId === myParticipant.id;
+
+                  return (
+                  <div
+                    key={i}
+                    className={`p-4 rounded-2xl border transition-all ${
+                      isPaid
+                        ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40'
+                        : 'bg-slate-50 dark:bg-gray-800/20 border-slate-50 dark:border-gray-800 hover:border-emerald-500/30'
+                    }`}
+                  >
+                    {/* Transfer header */}
+                    <div className="flex items-center justify-between mb-2">
+                       <span className={`text-[10px] font-black uppercase tracking-widest ${isMyTransfer ? 'text-rose-500' : 'text-slate-400 dark:text-gray-500'}`}>
+                         {t.de}
+                       </span>
+                       <ArrowLeft size={14} className="rotate-180 text-emerald-500" />
+                       <span className={`text-[10px] font-black uppercase tracking-widest ${isMyReceivable ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500'}`}>
+                         {t.para}
+                       </span>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="flex items-end justify-between gap-3">
+                      <span className={`text-2xl font-black tracking-tighter ${isPaid ? 'text-emerald-500' : 'dark:text-white'}`}>
+                        {moneda}{t.monto.toFixed(2)}
+                        {isPaid && <span className="text-sm ml-2">✓</span>}
+                      </span>
+
+                      {/* Action button */}
+                      {isMyTransfer && (
+                        isPaid ? (
+                          <button
+                            onClick={() => cancelPayment(t)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-[10px] font-black uppercase tracking-widest group shrink-0"
+                            title="Cancelar confirmación"
+                          >
+                            <CheckCircle2 size={14} className="group-hover:hidden" />
+                            <Undo2 size={14} className="hidden group-hover:block" />
+                            <span className="group-hover:hidden">Pagado</span>
+                            <span className="hidden group-hover:inline">Deshacer</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => confirmPayment(t)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-emerald-600 hover:dark:bg-emerald-500 transition-all text-[10px] font-black uppercase tracking-widest active:scale-95 shrink-0"
+                          >
+                            <CreditCard size={14} />
+                            Ya pagué
+                          </button>
+                        )
+                      )}
+
+                      {isMyReceivable && !isMyTransfer && (
+                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 ${
+                          isPaid
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        }`}>
+                          {isPaid ? 'Recibido ✓' : 'Pendiente'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
+
+                {/* Share balance button */}
                 <div className="pt-4 border-t border-slate-100 dark:border-gray-800 mt-4">
                    <Button variant="secondary" className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-100 dark:bg-gray-800 border-none group" onClick={copyBalance}>
                       {copied ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Share2 size={18} className="group-hover:text-emerald-500 transition-colors" />}
@@ -584,6 +752,49 @@ export default function EventDetail() {
              </div>
            )}
         </Card>
+
+        {/* 5. Notificar al Equipo */}
+        {messageTargets.length > 0 && (
+          <Card className="order-5 lg:col-start-9 lg:col-span-4 lg:row-start-4 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-6 rounded-[2rem]" hover={false}>
+            <h3 className="text-xs font-black dark:text-white mb-4 tracking-tight flex items-center gap-2 uppercase">
+              <Megaphone className="text-amber-500" size={14} /> Notificar al Equipo
+            </h3>
+            <p className="text-[10px] text-slate-400 dark:text-gray-500 font-bold mb-4 uppercase tracking-widest">
+              {messageTargets.map(t => t.nombre).join(', ')}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={sendingQuickMsg}
+                onClick={() => sendQuickMessage('gastos_subidos', 'subió sus gastos al evento')}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all text-xs font-black uppercase tracking-widest active:scale-95 disabled:opacity-50 text-left"
+              >
+                <Upload size={15} className="shrink-0" />
+                Ya subí mis gastos
+              </button>
+              <button
+                disabled={sendingQuickMsg}
+                onClick={() => sendQuickMessage('gastos_actualizados', 'actualizó los gastos del evento')}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all text-xs font-black uppercase tracking-widest active:scale-95 disabled:opacity-50 text-left"
+              >
+                <RefreshCw size={15} className="shrink-0" />
+                Actualicé los gastos
+              </button>
+              <button
+                disabled={sendingQuickMsg}
+                onClick={() => sendQuickMessage('listo', 'dice que todo está listo')}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-black uppercase tracking-widest active:scale-95 disabled:opacity-50 text-left"
+              >
+                <Check size={15} className="shrink-0" />
+                ¡Todo listo!
+              </button>
+            </div>
+            {sendingQuickMsg && (
+              <p className="text-[10px] text-slate-400 dark:text-gray-500 font-bold mt-3 text-center uppercase tracking-widest animate-pulse">
+                Enviando...
+              </p>
+            )}
+          </Card>
+        )}
 
       </div>
 
@@ -603,10 +814,10 @@ export default function EventDetail() {
                 Añade el correo de tu colaborador. Si no tiene cuenta, se le invitará a crear una para unirse al viaje.
              </p>
              <form onSubmit={handleInviteByEmail} className="space-y-8">
-                <Input 
-                  label="Email del Invitado" 
+                <Input
+                  label="Email del Invitado"
                   type="email"
-                  placeholder="ejemplo@email.com" 
+                  placeholder="ejemplo@email.com"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   autoFocus
@@ -625,8 +836,8 @@ export default function EventDetail() {
           </Card>
         </div>
       )}
-      {/* Confirmation Dialog */}
-      <ConfirmDialog 
+
+      <ConfirmDialog
         isOpen={confirmState.open}
         onClose={() => setConfirmState({ ...confirmState, open: false })}
         onConfirm={confirmState.onConfirm}

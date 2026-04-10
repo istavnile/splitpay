@@ -3,6 +3,7 @@ import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { Button } from './UI';
 import Onboarding from './Onboarding';
+import { MobileNotificationBell } from './NotificationsPanel';
 
 const MainLayout = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,9 +37,12 @@ const MainLayout = ({ children }) => {
             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
             <span className="font-bold dark:text-white">SplitPay</span>
         </div>
-        <Button variant="ghost" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <MobileNotificationBell />
+          <Button variant="ghost" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Drawer Overlay */}

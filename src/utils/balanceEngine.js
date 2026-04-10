@@ -49,7 +49,9 @@ export function calculateBalance(gastosActivos, participantesIds, perfiles) {
         transferencias.push({
             de: deudores[i].nombre,
             para: acreedores[j].nombre,
-            monto: montoTransferir
+            monto: montoTransferir,
+            deId: deudores[i].id,
+            paraId: acreedores[j].id
         });
 
         txt += `• ${deudores[i].nombre} -> ${acreedores[j].nombre}: ${montoTransferir.toFixed(2)}\n`;

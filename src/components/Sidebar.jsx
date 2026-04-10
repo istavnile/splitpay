@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  Activity, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Activity,
+  Settings,
   LogOut,
   Moon,
   Sun
@@ -13,6 +13,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Logo from './Logo';
+import { NotificationBell } from './NotificationsPanel';
+import pb from '../lib/pocketbase';
 
 const SidebarItem = ({ to, icon: Icon, label }) => (
   <NavLink
@@ -48,7 +50,8 @@ const Sidebar = () => {
         <SidebarItem to="/events" icon={Calendar} label="Eventos" />
         <SidebarItem to="/members" icon={Users} label="Miembros" />
         <SidebarItem to="/activity" icon={Activity} label="Actividad" />
-        
+        <NotificationBell />
+
         <div className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-600 mb-2 px-4">
           Sistema
         </div>
