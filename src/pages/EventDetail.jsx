@@ -427,7 +427,7 @@ export default function EventDetail() {
                                value={event?.fecha_evento ? event.fecha_evento.split(' ')[0] : event?.fecha_creacion ? event.fecha_creacion.split(' ')[0] : ''}
                                onChange={async (e) => {
                                  const val = e.target.value;
-                                 const iso = val ? new Date(val).toISOString().replace('T', ' ') : '';
+                                 const iso = val ? val + ' 12:00:00.000Z' : '';
                                  setEvent(prev => ({ ...prev, fecha_evento: iso }));
                                  try { await pb.collection('events').update(id, { fecha_evento: iso }); } catch (_) {}
                                }}
@@ -435,9 +435,9 @@ export default function EventDetail() {
                              />
                            ) : (
                              event?.fecha_evento
-                               ? new Date(event.fecha_evento).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                               ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
                                : event?.fecha_creacion
-                               ? new Date(event.fecha_creacion).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                               ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
                                : 'Sin fecha'
                            )}
                            <span className="opacity-30">|</span>

@@ -98,7 +98,7 @@ export async function generateReceipt({ event, expenses, participants, balance, 
 
   const fecha = event?.fecha_evento || event?.fecha_creacion;
   const fechaStr = fecha
-    ? new Date(fecha).toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Date(fecha.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
   const hoy = new Date().toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
 

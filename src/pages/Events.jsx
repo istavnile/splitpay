@@ -55,9 +55,9 @@ function EventCard({ event, user, onArchive, onDelete, creatorName }) {
           <div className="flex items-center gap-2 mt-2">
             <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
               {event.fecha_evento
-                ? new Date(event.fecha_evento).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
                 : event.fecha_creacion
-                ? new Date(event.fecha_creacion).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
                 : 'Sin fecha'}
             </p>
             {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
