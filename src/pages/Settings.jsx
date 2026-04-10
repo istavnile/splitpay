@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
 import { Button, Card, Input, StatusModal } from '../components/UI';
-import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X } from 'lucide-react';
+import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X, CreditCard } from 'lucide-react';
 import AvatarCropper from '../components/AvatarCropper';
 
 export default function Settings() {
