@@ -6,11 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationsContext';
 import { Card, Button, Input, ConfirmDialog, StatusModal, Toast } from '../components/UI';
 import { calculateBalance } from '../utils/balanceEngine';
+import { generateReceipt } from '../utils/generateReceipt';
+import EventChat from '../components/EventChat';
 import {
   ArrowLeft, Plus, UserPlus, Share2, Trash2,
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
   X, AlertCircle, Users, Calendar,
-  Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone
+  Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone, FileDown
 } from 'lucide-react';
 
 export default function EventDetail() {
@@ -742,20 +744,40 @@ export default function EventDetail() {
                   );
                 })}
 
-                {/* Share balance button */}
-                <div className="pt-4 border-t border-slate-100 dark:border-gray-800 mt-4">
+                {/* Share + PDF buttons */}
+                <div className="pt-4 border-t border-slate-100 dark:border-gray-800 mt-4 flex flex-col gap-2">
                    <Button variant="secondary" className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-100 dark:bg-gray-800 border-none group" onClick={copyBalance}>
                       {copied ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Share2 size={18} className="group-hover:text-emerald-500 transition-colors" />}
-                      <span className="font-black uppercase tracking-widest text-[11px]">{copied ? 'Enlace Copiado' : 'Compartir Balance'}</span>
+                      <span className="font-black uppercase tracking-widest text-[11px]">{copied ? 'Copiado' : 'Compartir Balance'}</span>
+                   </Button>
+                   <Button
+                     variant="secondary"
+                     className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-emerald-700 dark:hover:bg-slate-100 border-none group"
+                     onClick={() => generateReceipt({
+                       event,
+                       expenses,
+                       participants,
+                       balance,
+                       moneda,
+                       userName: user?.name || user?.email?.split('@')[0] || 'Usuario',
+                     })}
+                   >
+                      <FileDown size={18} className="group-hover:scale-110 transition-transform" />
+                      <span className="font-black uppercase tracking-widest text-[11px]">Descargar Recibo PDF</span>
                    </Button>
                 </div>
              </div>
            )}
         </Card>
 
-        {/* 5. Notificar al Equipo */}
+        {/* 5. Chat del Evento — full width at bottom */}
+        <div className="order-5 lg:col-span-12">
+          <EventChat eventId={id} />
+        </div>
+
+        {/* 6. Notificar al Equipo */}
         {messageTargets.length > 0 && (
-          <Card className="order-5 lg:col-start-9 lg:col-span-4 lg:row-start-4 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-6 rounded-[2rem]" hover={false}>
+          <Card className="order-6 lg:col-start-9 lg:col-span-4 lg:row-start-4 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-6 rounded-[2rem]" hover={false}>
             <h3 className="text-xs font-black dark:text-white mb-4 tracking-tight flex items-center gap-2 uppercase">
               <Megaphone className="text-amber-500" size={14} /> Notificar al Equipo
             </h3>
