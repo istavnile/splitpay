@@ -206,11 +206,14 @@ export async function generateReceipt({ event, expenses, participants, balance, 
 
   const cuota = participants.length > 0 ? balance.total / participants.length : 0;
 
+  // Pre-compute which row index is "me" — avoids embedding unicode in cell text
+  const myRowIndex = balance.summary.findIndex(s => s.nombre === userName);
+
   autoTable(doc, {
     startY: y,
     head: [['Participante', 'Total pagado', 'Cuota justa', 'Balance']],
     body: balance.summary.map(s => [
-      s.nombre === userName ? `${s.nombre}  ★` : s.nombre,
+      s.nombre,
       `${moneda}${s.pagado.toFixed(2)}`,
       `${moneda}${cuota.toFixed(2)}`,
       `${s.balance >= 0 ? '+' : ''}${moneda}${s.balance.toFixed(2)}`,
@@ -229,8 +232,7 @@ export async function generateReceipt({ event, expenses, participants, balance, 
     tableLineWidth: 0.2,
     didParseCell(data) {
       if (data.section !== 'body') return;
-      const name = String(data.row.raw?.[0] || '');
-      const isMe = name.includes('★');
+      const isMe = data.row.index === myRowIndex;
       if (isMe) {
         data.cell.styles.fillColor = GREEN_BG;
         data.cell.styles.textColor = GREEN_FG;
@@ -239,7 +241,7 @@ export async function generateReceipt({ event, expenses, participants, balance, 
       if (data.column.index === 3) {
         const val = String(data.cell.raw || '');
         if (val.startsWith('+')) {
-          data.cell.styles.textColor = isMe ? GREEN_FG : [22, 163, 74];
+          data.cell.styles.textColor = GREEN_FG;
         } else if (val !== `${moneda}0.00` && !val.startsWith('+')) {
           data.cell.styles.textColor = RED;
         }
@@ -259,7 +261,7 @@ export async function generateReceipt({ event, expenses, participants, balance, 
     autoTable(doc, {
       startY: y,
       head: [['Quién paga', '', 'A quién', 'Monto']],
-      body: balance.transferencias.map(t => [t.de, '→', t.para, `${moneda}${t.monto.toFixed(2)}`]),
+      body: balance.transferencias.map(t => [t.de, '>>', t.para, `${moneda}${t.monto.toFixed(2)}`]),
       headStyles: HEAD_STYLE,
       bodyStyles: BODY_STYLE,
       columnStyles: {
