@@ -12,7 +12,7 @@ const TIPO_META = {
 };
 
 function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const diff = Date.now() - new Date((dateStr || '').replace(' ', 'T')).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'ahora';
   if (m < 60) return `${m}m`;

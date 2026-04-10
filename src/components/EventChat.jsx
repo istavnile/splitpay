@@ -3,12 +3,22 @@ import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
 
+// PocketBase returns "2026-04-10 12:34:56.789Z" — space instead of T
+// Safari and Firefox don't parse that format, so we normalise it first.
+function pbDate(dateStr) {
+  if (!dateStr) return new Date(NaN);
+  return new Date(dateStr.replace(' ', 'T'));
+}
+
 function timeStr(dateStr) {
-  return new Date(dateStr).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  const d = pbDate(dateStr);
+  if (isNaN(d)) return '';
+  return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
 }
 
 function dateGroup(dateStr) {
-  const d = new Date(dateStr);
+  const d = pbDate(dateStr);
+  if (isNaN(d)) return '';
   const today = new Date();
   if (d.toDateString() === today.toDateString()) return 'Hoy';
   const yesterday = new Date(today);
@@ -34,8 +44,10 @@ export default function EventChat({ eventId }) {
     if (!eventId) return;
     fetchMessages();
 
-    pb.collection('chat_mensajes').subscribe('*', (e) => {
-      if (e.record.id_evento !== eventId) return;
+    // Subscribe to a specific topic for this event only, so cleanup
+    // doesn't cancel other active subscriptions on the same collection.
+    const topic = `chat_mensajes_${eventId}`;
+    pb.collection('chat_mensajes').subscribe(topic, (e) => {
       if (e.action === 'create') {
         pb.collection('chat_mensajes')
           .getOne(e.record.id, { expand: 'emisor_id' })
@@ -56,9 +68,26 @@ export default function EventChat({ eventId }) {
       } else if (e.action === 'delete') {
         setMessages(prev => prev.filter(m => m.id !== e.record.id));
       }
-    }).catch(() => {});
+    }).catch(() => {
+      // Fallback: subscribe to '*' filtered by eventId if specific topic fails
+      pb.collection('chat_mensajes').subscribe('*', (e) => {
+        if (e.record.id_evento !== eventId) return;
+        if (e.action === 'create') {
+          setMessages(prev => {
+            if (prev.find(m => m.id === e.record.id)) return prev;
+            const next = [...prev, e.record];
+            if (!open) setUnread(next.length - lastSeenCount.current);
+            return next;
+          });
+        } else if (e.action === 'delete') {
+          setMessages(prev => prev.filter(m => m.id !== e.record.id));
+        }
+      }).catch(() => {});
+    });
 
-    return () => { pb.collection('chat_mensajes').unsubscribe('*'); };
+    return () => {
+      pb.collection('chat_mensajes').unsubscribe(topic);
+    };
   }, [eventId]);
 
   // Scroll to bottom & clear unread when opened

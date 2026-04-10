@@ -30,6 +30,9 @@ export default function EventDetail() {
 
   // Payment status
   const [paymentStatuses, setPaymentStatuses] = useState([]);
+  // Contacts agenda
+  const [contacts, setContacts] = useState([]);       // [{ email, nombre }]
+  const [selectedContacts, setSelectedContacts] = useState([]); // emails picked from agenda
   // Users to message (all members except current user)
   const [messageTargets, setMessageTargets] = useState([]); // [{id, nombre}]
   const [sendingQuickMsg, setSendingQuickMsg] = useState(false);
@@ -41,6 +44,46 @@ export default function EventDetail() {
   const [inviteEmail, setInviteEmail] = useState('');
 
   const [modals, setModals] = useState({ invite: false, settings: false });
+
+  // Load past contacts whenever invite modal opens
+  useEffect(() => {
+    if (!modals.invite || !user) return;
+    setSelectedContacts([]);
+    (async () => {
+      try {
+        // All members the current user has ever created across all their events
+        const rows = await pb.collection('members').getFullList({
+          filter: `id_evento.creado_por = "${user.id}"`,
+          fields: 'email,expand',
+          expand: 'id_usuario',
+        });
+        // Also members of events they participate in (shared events)
+        const sharedRows = await pb.collection('members').getFullList({
+          filter: `id_evento.members.id_usuario ?= "${user.id}"`,
+          fields: 'email,expand',
+          expand: 'id_usuario',
+        }).catch(() => []);
+
+        const allRows = [...rows, ...sharedRows];
+        const currentEmails = new Set(participants.map(p => p.email).filter(Boolean));
+        currentEmails.add(user.email); // exclude self
+
+        const seen = new Set();
+        const list = [];
+        allRows.forEach(r => {
+          const email = r.email?.toLowerCase();
+          if (!email || seen.has(email) || currentEmails.has(email)) return;
+          seen.add(email);
+          const nombre = r.expand?.id_usuario?.name
+            || r.expand?.id_usuario?.email?.split('@')[0]
+            || email.split('@')[0];
+          list.push({ email, nombre });
+        });
+        list.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        setContacts(list);
+      } catch (_) {}
+    })();
+  }, [modals.invite]);
   const [balance, setBalance] = useState({ transferencias: [], summary: [], text: '', total: 0 });
   const [copied, setCopied] = useState(false);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: () => {} });
@@ -225,58 +268,58 @@ export default function EventDetail() {
     }
   };
 
+  // Invite a single email (from form input or contact chip)
+  const inviteOneEmail = async (email) => {
+    const existing = await pb.collection('members').getFirstListItem(
+      `id_evento = "${id}" && email = "${email}"`
+    ).catch(() => null);
+    if (existing) return; // already a member — skip silently in bulk mode
+
+    await pb.collection('members').create({ id_evento: id, email, rol: 'editor' });
+
+    const alreadyParticipant = await pb.collection('participants').getFirstListItem(
+      `id_evento = "${id}" && email = "${email}"`
+    ).catch(() => null);
+
+    if (!alreadyParticipant) {
+      await pb.collection('participants').create({
+        id_evento: id,
+        nombre: email.split('@')[0],
+        email,
+        creado_por: user.id,
+      });
+    }
+  };
+
   const handleInviteByEmail = async (e) => {
     e.preventDefault();
-    if (!inviteEmail) return;
     setInviting(true);
-    const email = inviteEmail.toLowerCase().trim();
+
+    // Collect: typed email + any selected contacts
+    const emails = new Set();
+    if (inviteEmail.trim()) emails.add(inviteEmail.toLowerCase().trim());
+    selectedContacts.forEach(em => emails.add(em));
+
+    if (emails.size === 0) { setInviting(false); return; }
+
     try {
-      const existing = await pb.collection('members').getFirstListItem(
-        `id_evento = "${id}" && email = "${email}"`
-      ).catch(() => null);
-
-      if (existing) {
-        setStatus({
-          isOpen: true,
-          type: 'error',
-          title: 'Ya está invitado',
-          message: `${email} ya es colaborador de este evento.`
-        });
-        setInviting(false);
-        return;
-      }
-
-      await pb.collection('members').create({ id_evento: id, email, rol: 'editor' });
-
-      const alreadyParticipant = await pb.collection('participants').getFirstListItem(
-        `id_evento = "${id}" && email = "${email}"`
-      ).catch(() => null);
-
-      if (!alreadyParticipant) {
-        await pb.collection('participants').create({
-          id_evento: id,
-          nombre: email.split('@')[0],
-          email,
-          creado_por: user.id
-        });
-      }
-
+      await Promise.all([...emails].map(inviteOneEmail));
+      const names = [...emails].map(em => {
+        const c = contacts.find(c => c.email === em);
+        return c?.nombre || em;
+      }).join(', ');
       setStatus({
         isOpen: true,
         type: 'success',
-        title: 'Invitación Enviada',
-        message: `Se ha invitado a ${email} a colaborar en este evento.`
+        title: emails.size === 1 ? 'Invitación Enviada' : `${emails.size} invitaciones enviadas`,
+        message: `${names} ${emails.size === 1 ? 'ha sido invitado' : 'han sido invitados'} al evento.`
       });
       setInviteEmail('');
+      setSelectedContacts([]);
       setModals({ ...modals, invite: false });
       fetchData();
     } catch (err) {
-      setStatus({
-        isOpen: true,
-        type: 'error',
-        title: 'Error al Invitar',
-        message: err.message
-      });
+      setStatus({ isOpen: true, type: 'error', title: 'Error al Invitar', message: err.message });
     } finally {
       setInviting(false);
     }
@@ -821,34 +864,77 @@ export default function EventDetail() {
       {/* Invite Modal */}
       {modals.invite && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
-          <Card className="max-w-md w-full animate-in zoom-in-95 duration-200 p-10 border-none shadow-2xl rounded-[3rem]" hover={false}>
-             <div className="flex justify-between items-center mb-8">
+          <Card className="max-w-md w-full animate-in zoom-in-95 duration-200 p-8 border-none shadow-2xl rounded-[3rem] max-h-[90vh] overflow-y-auto" hover={false}>
+             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-black flex items-center gap-2 dark:text-white tracking-tight leading-none">
-                  <UserPlus className="text-emerald-500" size={32} /> <span className="uppercase">Invitar</span>
+                  <UserPlus className="text-emerald-500" size={28} /> <span className="uppercase">Invitar</span>
                 </h2>
-                <button onClick={() => setModals({ ...modals, invite: false })} className="text-slate-400 hover:text-white transition-colors">
-                   <X size={28} />
+                <button onClick={() => { setModals({ ...modals, invite: false }); setSelectedContacts([]); }} className="text-slate-400 hover:text-white transition-colors">
+                   <X size={24} />
                 </button>
              </div>
-             <p className="text-sm text-slate-500 dark:text-gray-400 mb-10 leading-relaxed font-bold">
-                Añade el correo de tu colaborador. Si no tiene cuenta, se le invitará a crear una para unirse al viaje.
-             </p>
-             <form onSubmit={handleInviteByEmail} className="space-y-8">
+
+             {/* Contacts agenda */}
+             {contacts.length > 0 && (
+               <div className="mb-6">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500 mb-3">
+                   Contactos frecuentes
+                 </p>
+                 <div className="flex flex-wrap gap-2">
+                   {contacts.map(c => {
+                     const selected = selectedContacts.includes(c.email);
+                     return (
+                       <button
+                         key={c.email}
+                         type="button"
+                         onClick={() => setSelectedContacts(prev =>
+                           selected ? prev.filter(e => e !== c.email) : [...prev, c.email]
+                         )}
+                         className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black transition-all active:scale-95 border ${
+                           selected
+                             ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
+                             : 'bg-slate-50 dark:bg-gray-800 text-slate-600 dark:text-gray-300 border-slate-100 dark:border-gray-700 hover:border-emerald-500/50'
+                         }`}
+                       >
+                         <div className={`w-5 h-5 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 ${selected ? 'bg-white/20' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                           {c.nombre[0].toUpperCase()}
+                         </div>
+                         {c.nombre}
+                         {selected && <Check size={11} className="shrink-0" />}
+                       </button>
+                     );
+                   })}
+                 </div>
+                 {selectedContacts.length > 0 && (
+                   <p className="text-[10px] text-emerald-500 font-black mt-2 uppercase tracking-widest">
+                     {selectedContacts.length} seleccionado{selectedContacts.length > 1 ? 's' : ''}
+                   </p>
+                 )}
+               </div>
+             )}
+
+             {/* Manual email input */}
+             <form onSubmit={handleInviteByEmail} className="space-y-5">
                 <Input
-                  label="Email del Invitado"
+                  label="O añade un email nuevo"
                   type="email"
                   placeholder="ejemplo@email.com"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
-                  autoFocus
-                  required
-                  className="bg-slate-50 dark:bg-gray-800 border-slate-100 dark:border-gray-700 h-14 px-6 rounded-2xl font-bold"
+                  required={selectedContacts.length === 0}
+                  className="bg-slate-50 dark:bg-gray-800 border-slate-100 dark:border-gray-700 h-12 px-5 rounded-2xl font-bold"
                 />
-                <div className="flex flex-col gap-3 pt-4">
-                   <Button className="py-5 h-auto rounded-2xl font-black shadow-xl shadow-emerald-500/20 uppercase tracking-widest text-xs" type="submit" disabled={inviting}>
-                      {inviting ? 'Enviando...' : 'Enviar Invitación'}
+                <div className="flex flex-col gap-3 pt-2">
+                   <Button
+                     className="py-4 h-auto rounded-2xl font-black shadow-xl shadow-emerald-500/20 uppercase tracking-widest text-xs"
+                     type="submit"
+                     disabled={inviting || (selectedContacts.length === 0 && !inviteEmail.trim())}
+                   >
+                      {inviting ? 'Enviando...' : selectedContacts.length > 0
+                        ? `Invitar ${selectedContacts.length + (inviteEmail.trim() ? 1 : 0)} persona${selectedContacts.length + (inviteEmail.trim() ? 1 : 0) > 1 ? 's' : ''}`
+                        : 'Enviar Invitación'}
                    </Button>
-                   <Button variant="ghost" className="py-5 h-auto rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-400" onClick={() => setModals({ ...modals, invite: false })} type="button">
+                   <Button variant="ghost" className="py-4 h-auto rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-400" onClick={() => { setModals({ ...modals, invite: false }); setSelectedContacts([]); }} type="button">
                       Cerrar
                    </Button>
                 </div>
