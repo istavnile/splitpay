@@ -753,7 +753,7 @@ export default function EventDetail() {
                    <Button
                      variant="secondary"
                      className="w-full py-4 h-auto rounded-2xl flex items-center justify-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-emerald-700 dark:hover:bg-slate-100 border-none group"
-                     onClick={() => generateReceipt({
+                     onClick={() => generateReceipt({  // async — fire-and-forget
                        event,
                        expenses,
                        participants,
@@ -770,12 +770,7 @@ export default function EventDetail() {
            )}
         </Card>
 
-        {/* 5. Chat del Evento — full width at bottom */}
-        <div className="order-5 lg:col-span-12">
-          <EventChat eventId={id} />
-        </div>
-
-        {/* 6. Notificar al Equipo */}
+        {/* 5. Notificar al Equipo */}
         {messageTargets.length > 0 && (
           <Card className="order-6 lg:col-start-9 lg:col-span-4 lg:row-start-4 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-6 rounded-[2rem]" hover={false}>
             <h3 className="text-xs font-black dark:text-white mb-4 tracking-tight flex items-center gap-2 uppercase">
@@ -819,6 +814,9 @@ export default function EventDetail() {
         )}
 
       </div>
+
+      {/* Floating Chat */}
+      <EventChat eventId={id} />
 
       {/* Invite Modal */}
       {modals.invite && (
