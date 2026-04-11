@@ -220,5 +220,3 @@ export default function PaymentInfoPopup({ userId, name, isUser, email, onClose 
     </div>
   );
 }
-  );
-}
