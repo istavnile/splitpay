@@ -30,9 +30,12 @@ export default function PaymentInfoPopup({ userId, name, isUser, email, onClose 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
     pb.collection('payment_methods')
-      .getFullList({ filter: `user_id = "${userId}"`, sort: 'tipo' })
+      .getFullList({ filter: `user_id = "${userId}"` })
       .then(rows => setMethods(rows))
-      .catch(() => setMethods([]))
+      .catch((err) => {
+        console.error('Error fetching member payments:', err);
+        setMethods([]);
+      })
       .finally(() => setLoading(false));
   }, [userId]);
 

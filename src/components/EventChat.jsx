@@ -46,15 +46,18 @@ export default function EventChat({ eventId }) {
     if (!eventId) return;
     fetchMessages();
 
-    // Subscribe to a specific topic for this event only, so cleanup
-    // doesn't cancel other active subscriptions on the same collection.
-    const topic = `chat_mensajes_${eventId}`;
-    pb.collection('chat_mensajes').subscribe(topic, (e) => {
+    // Using '*' (wildcard) is the most robust way to subscribe to collection changes
+    // as it works across all PocketBase versions without requiring custom topics.
+    pb.collection('chat_mensajes').subscribe('*', (e) => {
+      // Client-side filtering to only react to messages for THIS event
+      if (e.record.id_evento !== eventId) return;
+
       if (e.action === 'create') {
         pb.collection('chat_mensajes')
           .getOne(e.record.id, { expand: 'emisor_id' })
           .then(full => {
             setMessages(prev => {
+              if (prev.some(m => m.id === full.id)) return prev;
               const next = [...prev, full];
               if (!open) setUnread(next.length - lastSeenCount.current);
               return next;
@@ -62,6 +65,7 @@ export default function EventChat({ eventId }) {
           })
           .catch(() => {
             setMessages(prev => {
+              if (prev.some(m => m.id === e.record.id)) return prev;
               const next = [...prev, e.record];
               if (!open) setUnread(next.length - lastSeenCount.current);
               return next;
@@ -70,25 +74,14 @@ export default function EventChat({ eventId }) {
       } else if (e.action === 'delete') {
         setMessages(prev => prev.filter(m => m.id !== e.record.id));
       }
-    }).catch(() => {
-      // Fallback: subscribe to '*' filtered by eventId if specific topic fails
-      pb.collection('chat_mensajes').subscribe('*', (e) => {
-        if (e.record.id_evento !== eventId) return;
-        if (e.action === 'create') {
-          setMessages(prev => {
-            if (prev.find(m => m.id === e.record.id)) return prev;
-            const next = [...prev, e.record];
-            if (!open) setUnread(next.length - lastSeenCount.current);
-            return next;
-          });
-        } else if (e.action === 'delete') {
-          setMessages(prev => prev.filter(m => m.id !== e.record.id));
-        }
-      }).catch(() => {});
+    }).catch(err => {
+      console.error('Error subscribing to chat:', err);
     });
 
     return () => {
-      pb.collection('chat_mensajes').unsubscribe(topic);
+      try {
+        pb.collection('chat_mensajes').unsubscribe('*');
+      } catch (e) {}
     };
   }, [eventId]);
 
