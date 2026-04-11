@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import pb from '../lib/pocketbase';
-import { Button, Card, Input, StatusModal } from '../components/UI';
+import { Button, Card, Input, StatusModal, Modal } from '../components/UI';
 import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X, CreditCard } from 'lucide-react';
 import AvatarCropper from '../components/AvatarCropper';
 
@@ -394,40 +394,12 @@ export default function Settings() {
                   ))}
                 </div>
 
-                {showBankForm ? (
-                  <form onSubmit={saveBank} className="space-y-3 p-4 bg-slate-50 dark:bg-gray-800/50 rounded-2xl border border-slate-100 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nueva cuenta</p>
-                      <button type="button" onClick={() => setShowBankForm(false)} className="text-slate-400 hover:text-rose-500">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="Banco" placeholder="BCP, Interbank..." value={newBank.banco} onChange={e => setNewBank({ ...newBank, banco: e.target.value })} />
-                      <Input label="Alias (opcional)" placeholder="Principal, Ahorros..." value={newBank.alias} onChange={e => setNewBank({ ...newBank, alias: e.target.value })} />
-                    </div>
-                    <Input label="N° de Cuenta" placeholder="123-456789-0-12" value={newBank.numero_cuenta} onChange={e => setNewBank({ ...newBank, numero_cuenta: e.target.value })} />
-                    <Input label="CCI (opcional)" placeholder="00312312345678901234" value={newBank.cci} onChange={e => setNewBank({ ...newBank, cci: e.target.value })} />
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1 block mb-2">Moneda</label>
-                      <div className="flex bg-slate-100 dark:bg-gray-700 rounded-xl p-1 w-fit">
-                        {[['SOL', 'S/. SOL'], ['USD', '$ USD']].map(([val, lbl]) => (
-                          <button key={val} type="button" onClick={() => setNewBank({ ...newBank, moneda: val })}
-                            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${newBank.moneda === val ? 'bg-white dark:bg-gray-600 text-emerald-600 shadow-sm' : 'text-slate-400'}`}>
-                            {lbl}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <Button type="submit" disabled={savingPay} className="w-full rounded-2xl">
-                      {savingPay ? 'Guardando...' : 'Agregar Cuenta'}
-                    </Button>
-                  </form>
-                ) : (
-                  <button onClick={() => setShowBankForm(true)} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 dark:border-gray-700 rounded-2xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-xs tracking-widest w-full justify-center">
-                    <Plus size={14} /> Agregar Cuenta Bancaria
-                  </button>
-                )}
+                <button onClick={() => setShowBankForm(true)} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 dark:border-gray-800 rounded-2xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-xs tracking-widest w-full justify-center group/btn">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-gray-800 flex items-center justify-center text-slate-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-white transition-all">
+                    <Plus size={14} />
+                  </div>
+                  Agregar Cuenta Bancaria
+                </button>
               </div>
             </div>
            </Card>
@@ -474,6 +446,79 @@ export default function Settings() {
           onCancel={() => setCropFile(null)}
         />
       )}
+      <Modal
+        isOpen={showBankForm}
+        onClose={() => setShowBankForm(false)}
+        title="Nueva Cuenta Bancaria"
+      >
+        <form onSubmit={saveBank} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input 
+              label="Banco" 
+              placeholder="BCP, Interbank..." 
+              value={newBank.banco} 
+              onChange={e => setNewBank({ ...newBank, banco: e.target.value })} 
+            />
+            <Input 
+              label="Alias (opcional)" 
+              placeholder="Principal, Ahorros..." 
+              value={newBank.alias} 
+              onChange={e => setNewBank({ ...newBank, alias: e.target.value })} 
+            />
+          </div>
+          <Input 
+            label="Número de Cuenta" 
+            placeholder="123-456789-0-12" 
+            value={newBank.numero_cuenta} 
+            onChange={e => setNewBank({ ...newBank, numero_cuenta: e.target.value })} 
+          />
+          <Input 
+            label="CCI (opcional)" 
+            placeholder="003-123-123456789012-34" 
+            value={newBank.cci} 
+            onChange={e => setNewBank({ ...newBank, cci: e.target.value })} 
+          />
+          
+          <div className="bg-slate-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-slate-100 dark:border-gray-800">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500 block mb-3 ml-1">Moneda de la cuenta</label>
+            <div className="flex bg-slate-100 dark:bg-gray-800 rounded-xl p-1 gap-1">
+              {[['SOL', 'S/. SOL'], ['USD', '$ USD']].map(([val, lbl]) => (
+                <button 
+                  key={val} 
+                  type="button" 
+                  onClick={() => setNewBank({ ...newBank, moneda: val })}
+                  className={`flex-1 py-3 rounded-lg text-xs font-black transition-all ${
+                    newBank.moneda === val 
+                      ? 'bg-white dark:bg-gray-700 text-emerald-500 shadow-xl shadow-emerald-500/10' 
+                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button 
+              variant="ghost" 
+              className="flex-1 rounded-2xl py-4 h-auto font-black uppercase tracking-widest text-[10px] text-slate-400" 
+              onClick={() => setShowBankForm(false)}
+              type="button"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={savingPay || !newBank.banco.trim() || !newBank.numero_cuenta.trim()} 
+              className="flex-[2] rounded-2xl py-4 h-auto font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-500/20"
+            >
+              {savingPay ? 'Guardando...' : 'Añadir Cuenta'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <StatusModal
         isOpen={status.isOpen}
         onClose={() => setStatus({...status, isOpen: false})}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Phone, Building2, CreditCard, Copy, Check } from 'lucide-react';
+import { X, Phone, Building2, CreditCard, Copy, Check, Shield } from 'lucide-react';
 import pb from '../lib/pocketbase';
 
 const TAG_STYLES = {
@@ -213,8 +213,8 @@ export default function PaymentInfoPopup({ userId, name, isUser, email, onClose 
         </div>
         
         {/* Footnote */}
-        <div className="px-8 py-5 bg-slate-50 dark:bg-gray-900/40 border-t border-slate-100 dark:border-gray-800 flex justify-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-          SplitPay Shield Protected 🛡️
+        <div className="px-8 py-5 bg-slate-50 dark:bg-gray-900/40 border-t border-slate-100 dark:border-gray-800 flex justify-center items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+          SplitPay Shield Protected <Shield size={10} className="text-emerald-500" />
         </div>
       </div>
     </div>
