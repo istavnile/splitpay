@@ -39,9 +39,12 @@ export const Input = ({ label, error, className = '', wrapperClassName = '', rig
   );
 };
 
-export const Card = ({ children, className = '', hover = true }) => {
+export const Card = ({ children, className = '', hover = true, ...props }) => {
   return (
-    <div className={`glass rounded-2xl p-6 transition-all duration-300 ${hover ? 'hover:-translate-y-1 hover:shadow-2xl' : ''} ${className}`}>
+    <div 
+      className={`glass rounded-2xl p-6 transition-all duration-300 ${hover ? 'hover:-translate-y-1 hover:shadow-2xl' : ''} ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
