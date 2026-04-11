@@ -225,12 +225,12 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* Profile Section */}
-        <section className="md:col-span-12 lg:col-span-7 flex flex-col gap-6">
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
-             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
-                <User size={16} /> Detalles Personales
-             </h3>
+        {/* Main Column */}
+        <section className="md:col-span-12 lg:col-span-7 flex flex-col gap-8">
+           <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
+                 <User size={14} className="text-emerald-500" /> Detalles Personales
+              </h3>
              
              <form onSubmit={handleUpdateProfile} className="space-y-8">
                 <div className="flex flex-col items-center sm:flex-row gap-8 mb-10">
@@ -299,10 +299,10 @@ export default function Settings() {
              </form>
           </Card>
 
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
-             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
-                <Lock size={16} /> Seguridad
-             </h3>
+           <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
+                 <Lock size={14} className="text-emerald-500" /> Seguridad
+              </h3>
              <form onSubmit={handleChangePassword} className="space-y-6">
                 <Input 
                    label="Contraseña Actual" 
@@ -324,52 +324,51 @@ export default function Settings() {
                       onChange={e => setPasswords({...passwords, confirm: e.target.value})}
                    />
                 </div>
-                <Button type="submit" disabled={loading} variant="secondary" className="w-full sm:w-auto rounded-2xl">
-                   {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
-                </Button>
-             </form>
-          </Card>
-        </section>
+           <div className="pt-4">
+              <Button type="submit" disabled={loading} variant="secondary" className="w-full sm:w-auto rounded-xl px-10 h-14 font-black uppercase tracking-widest text-[10px]">
+                 {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
+              </Button>
+           </div>
+        </form>
+     </Card>
+           <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
+                 <CreditCard size={14} className="text-emerald-500" /> Datos de Pago
+              </h3>
 
-        {/* Payment Methods Section */}
-        <section className="md:col-span-12 flex flex-col gap-6">
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-8 flex items-center gap-2">
-              <CreditCard size={16} /> Datos de Pago
-            </h3>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {/* Phone / Yape / Plin */}
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-4 flex items-center gap-2">
                   <Phone size={13} /> Celular / Billetera Digital
                 </p>
-                <form onSubmit={savePhone} className="space-y-4">
-                  <Input
-                    label="Número de celular"
-                    placeholder="Ej: 987 654 321"
-                    value={phoneForm.telefono}
-                    onChange={e => setPhoneForm({ ...phoneForm, telefono: e.target.value })}
-                  />
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 ml-1 block mb-2">Disponible para</label>
-                    <div className="flex bg-slate-100 dark:bg-gray-800 rounded-xl p-1 w-fit gap-0.5">
-                      {[['yape', 'Yape'], ['plin', 'Plin'], ['ambos', 'Ambos']].map(([val, lbl]) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setPhoneForm({ ...phoneForm, etiquetas: val })}
-                          className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${phoneForm.etiquetas === val ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <Button type="submit" disabled={savingPay || !phoneForm.telefono.trim()} className="rounded-2xl px-6">
-                    {savingPay ? 'Guardando...' : phoneMethod ? 'Actualizar' : 'Guardar'}
-                  </Button>
-                </form>
+                <form onSubmit={savePhone} className="space-y-6">
+                   <Input
+                     label="Número de celular"
+                     placeholder="Ej: 987 654 321"
+                     value={phoneForm.telefono}
+                     onChange={e => setPhoneForm({ ...phoneForm, telefono: e.target.value })}
+                     className="bg-slate-50 dark:bg-gray-800 border-none h-14 px-6 rounded-2xl font-bold"
+                   />
+                   <div>
+                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 ml-1 block mb-3">Disponible para</label>
+                     <div className="flex bg-slate-100 dark:bg-gray-800 rounded-2xl p-1.5 w-fit gap-1">
+                       {[['yape', 'Yape'], ['plin', 'Plin'], ['ambos', 'Ambos']].map(([val, lbl]) => (
+                         <button
+                           key={val}
+                           type="button"
+                           onClick={() => setPhoneForm({ ...phoneForm, etiquetas: val })}
+                           className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${phoneForm.etiquetas === val ? 'bg-white dark:bg-gray-700 text-emerald-500 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                         >
+                           {lbl}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+                   <Button type="submit" disabled={savingPay || !phoneForm.telefono.trim()} className="w-full rounded-2xl py-4 h-auto font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-500/20">
+                     {savingPay ? 'Guardando...' : phoneMethod ? 'Actualizar Billetera' : 'Guardar Billetera'}
+                   </Button>
+                 </form>
               </div>
 
               {/* Bank accounts */}
@@ -429,11 +428,11 @@ export default function Settings() {
                 )}
               </div>
             </div>
-          </Card>
+           </Card>
         </section>
 
-        {/* Aside Section: Preferences */}
-        <section className="md:col-span-12 lg:col-span-5 flex flex-col gap-6">
+        {/* Aside Column */}
+        <section className="md:col-span-12 lg:col-span-5 flex flex-col gap-8">
            <Card className="border-none bg-indigo-500 text-white shadow-xl shadow-indigo-500/20" hover={false}>
               <div className="flex flex-col gap-4">
                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">

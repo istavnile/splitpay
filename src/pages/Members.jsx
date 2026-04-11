@@ -323,7 +323,12 @@ export default function Members() {
               const hasBanks = pays.some(m => m.tipo === 'banco');
               const phoneTag = pays.find(m => m.tipo === 'telefono')?.etiquetas;
               return (
-              <Card key={i} className="border-none shadow-sm shadow-indigo-500/5 dark:bg-gray-900/60 p-4 flex flex-col gap-3 group rounded-[1.5rem]" hover={true}>
+              <Card 
+                key={i} 
+                onClick={() => setPaymentInfo({ userId: member.userId, name: member.nombre, isUser: member.isUser, email: member.email })}
+                className="border-none shadow-sm shadow-indigo-500/5 dark:bg-gray-900/60 p-4 flex flex-col gap-3 group rounded-[1.5rem] cursor-pointer" 
+                hover={true}
+              >
                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
                        {member.nombre[0].toUpperCase()}
@@ -358,17 +363,9 @@ export default function Members() {
                        {member.email || 'Sin correo'}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0">
-                       {member.userId && (hasPhone || hasBanks) && (
-                         <button
-                           onClick={() => setPaymentInfo({ userId: member.userId, name: member.nombre })}
-                           className="p-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100 dark:border-emerald-500/20"
-                           title="Ver datos de pago"
-                         >
-                           {hasPhone ? <Phone size={14} /> : <Building2 size={14} />}
-                         </button>
-                       )}
                        <button
-                         onClick={() => {
+                         onClick={(e) => {
+                           e.stopPropagation();
                            setEditingContact(member);
                            setInviteEmail(member.email || '');
                            setEditingName(member.nombre);
@@ -380,7 +377,10 @@ export default function Members() {
                        </button>
                        {member.email && (
                          <button
-                           onClick={() => handleEmailInvite(member)}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleEmailInvite(member);
+                           }}
                            className="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm border border-indigo-100 dark:border-indigo-500/20"
                            title="Reenviar Invitación por Email"
                          >
@@ -388,7 +388,10 @@ export default function Members() {
                          </button>
                        )}
                        <button
-                         onClick={() => handleShare(member)}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           handleShare(member);
+                         }}
                          className="p-2 bg-slate-100 dark:bg-gray-800 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
                          title="Compartir / Invitar"
                        >
@@ -575,6 +578,8 @@ export default function Members() {
         <PaymentInfoPopup
           userId={paymentInfo.userId}
           name={paymentInfo.name}
+          isUser={paymentInfo.isUser}
+          email={paymentInfo.email}
           onClose={() => setPaymentInfo(null)}
         />
       )}

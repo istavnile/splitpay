@@ -21,6 +21,11 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
   const [zoom,    setZoom]    = useState(1);
   const [pan,     setPan]     = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  
+  // Base scale so 1.0x cover the circular viewport
+  const baseScale = imgEl ? (PREVIEW / Math.min(imgEl.naturalWidth, imgEl.naturalHeight)) : 1;
+  const effectiveZoom = zoom * baseScale;
+
   const lastPtr = useRef(null);
   const canvasRef = useRef(null);
 
@@ -52,10 +57,10 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
     ctx.clip();
 
     // Compute draw params
-    const { sx, sy, sw, sh } = getCropParams(imgEl, zoom, pan, S);
+    const { sx, sy, sw, sh } = getCropParams(imgEl, effectiveZoom, pan, S);
     ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, S, S);
     ctx.restore();
-  }, [imgEl, zoom, pan]);
+  }, [imgEl, zoom, pan, effectiveZoom]);
 
   // ── Helpers ─────────────────────────────────────────────────────
   function getCropParams(img, z, p, viewSize) {
@@ -94,8 +99,8 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
     const dx = e.clientX - lastPtr.current.x;
     const dy = e.clientY - lastPtr.current.y;
     lastPtr.current = { x: e.clientX, y: e.clientY };
-    setPan(prev => clampPan({ x: prev.x + dx, y: prev.y + dy }, imgEl, zoom));
-  }, [dragging, imgEl, zoom]);
+    setPan(prev => clampPan({ x: prev.x + dx, y: prev.y + dy }, imgEl, effectiveZoom));
+  }, [dragging, imgEl, effectiveZoom]);
 
   const onPointerUp = useCallback(() => {
     setDragging(false);
@@ -106,7 +111,7 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
   const handleZoom = (e) => {
     const z = Number(e.target.value);
     setZoom(z);
-    setPan(prev => clampPan(prev, imgEl, z));
+    setPan(prev => clampPan(prev, imgEl, z * baseScale));
   };
 
   // Pinch-to-zoom (wheel)
@@ -115,8 +120,8 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     const next  = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
     setZoom(next);
-    setPan(prev => clampPan(prev, imgEl, next));
-  }, [zoom, imgEl]);
+    setPan(prev => clampPan(prev, imgEl, next * baseScale));
+  }, [zoom, imgEl, baseScale]);
 
   // ── Confirm: render to output canvas, compress, return blob ──────
   const handleConfirm = () => {
@@ -127,7 +132,7 @@ export default function AvatarCropper({ file, onConfirm, onCancel }) {
     const ctx = out.getContext('2d');
 
     // Draw crop — same math as preview but scaled to OUT_SIZE
-    const { sx, sy, sw, sh } = getCropParams(imgEl, zoom, pan, PREVIEW);
+    const { sx, sy, sw, sh } = getCropParams(imgEl, effectiveZoom, pan, PREVIEW);
     // Scale sx/sy/sw/sh from preview coords to image coords (already in image coords)
     ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, OUT_SIZE, OUT_SIZE);
 
