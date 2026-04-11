@@ -33,8 +33,122 @@ export default function EventChat({ eventId }) {
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(true);
   const [sending, setSending]     = useState(false);
+  const [open, setOpen]           = useState(false);
+  const [unread, setUnread]       = useState(0);
   const [height, setHeight]       = useState(450);
+  const endRef   = useRef(null);
+  const inputRef = useRef(null);
   const isResizing = useRef(false);
+  // track last seen count so we can compute new messages while closed
+  const lastSeenCount = useRef(0);
+
+  useEffect(() => {
+    if (!eventId) return;
+    fetchMessages();
+
+    // Subscribe to a specific topic for this event only, so cleanup
+    // doesn't cancel other active subscriptions on the same collection.
+    const topic = `chat_mensajes_${eventId}`;
+    pb.collection('chat_mensajes').subscribe(topic, (e) => {
+      if (e.action === 'create') {
+        pb.collection('chat_mensajes')
+          .getOne(e.record.id, { expand: 'emisor_id' })
+          .then(full => {
+            setMessages(prev => {
+              const next = [...prev, full];
+              if (!open) setUnread(next.length - lastSeenCount.current);
+              return next;
+            });
+          })
+          .catch(() => {
+            setMessages(prev => {
+              const next = [...prev, e.record];
+              if (!open) setUnread(next.length - lastSeenCount.current);
+              return next;
+            });
+          });
+      } else if (e.action === 'delete') {
+        setMessages(prev => prev.filter(m => m.id !== e.record.id));
+      }
+    }).catch(() => {
+      // Fallback: subscribe to '*' filtered by eventId if specific topic fails
+      pb.collection('chat_mensajes').subscribe('*', (e) => {
+        if (e.record.id_evento !== eventId) return;
+        if (e.action === 'create') {
+          setMessages(prev => {
+            if (prev.find(m => m.id === e.record.id)) return prev;
+            const next = [...prev, e.record];
+            if (!open) setUnread(next.length - lastSeenCount.current);
+            return next;
+          });
+        } else if (e.action === 'delete') {
+          setMessages(prev => prev.filter(m => m.id !== e.record.id));
+        }
+      }).catch(() => {});
+    });
+
+    return () => {
+      pb.collection('chat_mensajes').unsubscribe(topic);
+    };
+  }, [eventId]);
+
+  // Scroll to bottom & clear unread when opened
+  useEffect(() => {
+    if (open) {
+      lastSeenCount.current = messages.length;
+      setUnread(0);
+      setTimeout(() => {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+        inputRef.current?.focus();
+      }, 60);
+    }
+  }, [open, messages.length]);
+
+  const fetchMessages = async () => {
+    try {
+      const records = await pb.collection('chat_mensajes').getFullList({
+        filter: `id_evento = "${eventId}"`,
+        sort: 'created',
+        expand: 'emisor_id',
+      });
+      setMessages(records);
+      lastSeenCount.current = records.length;
+    } catch (_) {}
+    setLoading(false);
+  };
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setInput('');
+    try {
+      await pb.collection('chat_mensajes').create({
+        id_evento: eventId,
+        emisor_id: user.id,
+        contenido: text,
+      });
+    } catch (_) { setInput(text); }
+    setSending(false);
+    inputRef.current?.focus();
+  };
+
+  const deleteMessage = async (msgId) => {
+    try { await pb.collection('chat_mensajes').delete(msgId); } catch (_) {}
+  };
+
+  // Build grouped items
+  const items = [];
+  let lastDate = null;
+  messages.forEach(msg => {
+    const dg = dateGroup(msg.created);
+    if (dg !== lastDate) {
+      items.push({ type: 'date', key: `d-${msg.id}`, label: dg });
+      lastDate = dg;
+    }
+    items.push({ type: 'msg', ...msg });
+  });
 
   // Resize logic
   useEffect(() => {
