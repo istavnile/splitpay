@@ -12,7 +12,7 @@ export default function Settings() {
   const [cropFile, setCropFile] = useState(null);   // raw file waiting to be cropped
   const [croppedBlob, setCroppedBlob] = useState(null); // final blob ready to upload
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    nombre: user?.name || '',
     username: user?.username || '',
     email: user?.email || '',
     moneda_preferida: user?.moneda_preferida || '$',
@@ -60,10 +60,12 @@ export default function Settings() {
     if (!user) return;
     pb.collection('payment_methods')
       .getFullList({ filter: `user_id = "${user.id}"`, sort: 'tipo,created' })
-      .then(rows => {
-        setPayMethods(rows);
-        const phone = rows.find(r => r.tipo === 'telefono');
-        if (phone) setPhoneForm({ telefono: phone.telefono || '', etiquetas: phone.etiquetas || 'yape' });
+      .then(records => {
+        setPayMethods(records);
+        const phone = records.find(m => m.tipo === 'telefono');
+        if (phone) {
+          setPhoneForm({ telefono: phone.telefono || '', etiquetas: phone.etiquetas || 'yape' });
+        }
       })
       .catch(() => {});
   }, [user]);
@@ -150,13 +152,13 @@ export default function Settings() {
       let updateData;
       if (croppedBlob) {
         const data = new FormData();
-        data.append('name', formData.name);
+        data.append('name', formData.nombre);
         data.append('username', formData.username);
         data.append('moneda_preferida', formData.moneda_preferida);
         data.append('avatar', croppedBlob, 'avatar.jpg');
         updateData = data;
       } else {
-        updateData = { name: formData.name, moneda_preferida: formData.moneda_preferida };
+        updateData = { name: formData.nombre, moneda_preferida: formData.moneda_preferida };
       }
 
       const updated = await pb.collection('users').update(user.id, updateData);
