@@ -61,7 +61,7 @@ const MainLayout = ({ children }) => {
       )}
 
       {/* Main Content Area */}
-      <main className="lg:ml-72 relative z-10 p-6 lg:p-10">
+      <main className="lg:ml-72 relative z-10 px-4 pt-3 pb-6 lg:p-10">
         <div className="max-w-7xl mx-auto">
           {children}
         </div>

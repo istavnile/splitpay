@@ -330,13 +330,18 @@ export default function EventChat({ eventId }) {
       {/* ── FAB button ────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen(o => !o)}
-        className={`fixed bottom-5 right-5 z-[150] w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all active:scale-95 hover:scale-105 ${
+        className={`fixed bottom-5 right-5 z-[150] h-14 px-4 lg:px-5 rounded-2xl shadow-2xl flex items-center gap-2.5 transition-all active:scale-95 hover:scale-105 ${
           open
             ? 'bg-slate-900 dark:bg-gray-800 text-white'
             : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/30'
         }`}
       >
         {open ? <X size={22} /> : <MessageSquare size={22} />}
+        {!open && (
+          <span className="hidden lg:block text-[11px] font-black uppercase tracking-widest whitespace-nowrap">
+            Chatea ahora
+          </span>
+        )}
         {!open && unread > 0 && (
           <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-lg">
             {unread > 9 ? '9+' : unread}
