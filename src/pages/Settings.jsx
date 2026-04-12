@@ -319,17 +319,17 @@ export default function Settings() {
                    value={passwords.old} 
                    onChange={e => setPasswords({...passwords, old: e.target.value})}
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                   <Input 
-                      label="Nueva Contraseña" 
-                      type="password" 
-                      value={passwords.new} 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+                   <Input
+                      label="Nueva Contraseña"
+                      type="password"
+                      value={passwords.new}
                       onChange={e => setPasswords({...passwords, new: e.target.value})}
                    />
-                   <Input 
-                      label="Confirmar Nueva Contraseña" 
-                      type="password" 
-                      value={passwords.confirm} 
+                   <Input
+                      label="Confirmar"
+                      type="password"
+                      value={passwords.confirm}
                       onChange={e => setPasswords({...passwords, confirm: e.target.value})}
                    />
                 </div>

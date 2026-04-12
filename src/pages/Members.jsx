@@ -101,6 +101,26 @@ export default function Members() {
         }
       });
 
+      // 5. Cross-reference emails against users collection to backfill isUser/userId
+      //    (participants added before account creation lack id_usuario)
+      const unlinked = Object.values(uniqueMap).filter(m => !m.isUser && m.email);
+      if (unlinked.length > 0) {
+        try {
+          const emailFilter = unlinked.map(m => `email = "${m.email.toLowerCase()}"`).join(' || ');
+          const foundUsers = await pb.collection('users').getFullList({ filter: emailFilter, fields: 'id,email,name' });
+          foundUsers.forEach(u => {
+            const key = Object.keys(uniqueMap).find(k => uniqueMap[k].email?.toLowerCase() === u.email.toLowerCase());
+            if (key) {
+              uniqueMap[key].isUser = true;
+              uniqueMap[key].userId = u.id;
+              if (!uniqueMap[key].nombre || uniqueMap[key].nombre === uniqueMap[key].email.split('@')[0]) {
+                uniqueMap[key].nombre = u.name || uniqueMap[key].nombre;
+              }
+            }
+          });
+        } catch (_) {}
+      }
+
       setMembers(Object.values(uniqueMap));
     } catch (err) {
       console.error('Error fetching members:', err);
@@ -413,11 +433,11 @@ export default function Members() {
             <span className="text-3xl font-black tracking-tighter">{members.length}</span>
          </div>
          <div className="flex flex-col gap-0.5 relative z-10 border-r border-white/10 px-4">
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">En App</span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Registrados</span>
             <span className="text-3xl font-black tracking-tighter">{members.filter(m => m.isUser).length}</span>
          </div>
          <div className="flex flex-col gap-0.5 relative z-10 pl-4">
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Locales</span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Sin cuenta</span>
             <span className="text-3xl font-black tracking-tighter">{members.filter(m => !m.isUser).length}</span>
          </div>
       </div>
