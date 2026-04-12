@@ -581,61 +581,74 @@ export default function Settings() {
       {showPremiumModal && (
         <>
           <style>{`
+            @keyframes sp-backdrop { from { opacity:0 } to { opacity:1 } }
+            @keyframes sp-card-in {
+              from { opacity:0; transform: scale(0.88) translateY(28px); }
+              to   { opacity:1; transform: scale(1)    translateY(0);    }
+            }
+            @keyframes sp-item-in {
+              from { opacity:0; transform: translateY(14px); }
+              to   { opacity:1; transform: translateY(0);    }
+            }
             @keyframes sp-float {
-              0%, 100% { transform: translateY(0px) rotate(-4deg) scale(1); }
-              50% { transform: translateY(-10px) rotate(4deg) scale(1.08); }
+              0%,100% { transform: translateY(0)    rotate(-4deg) scale(1);    }
+              50%     { transform: translateY(-10px) rotate( 4deg) scale(1.08); }
             }
-            @keyframes sp-orb-pulse {
-              0%, 100% { opacity: 0.15; transform: scale(1); }
-              50% { opacity: 0.3; transform: scale(1.2); }
+            @keyframes sp-orb {
+              0%,100% { opacity:.12; transform:scale(1);   }
+              50%     { opacity:.28; transform:scale(1.25); }
             }
-            .sp-star-float { animation: sp-float 2.8s ease-in-out infinite; }
-            .sp-orb { animation: sp-orb-pulse 4s ease-in-out infinite; }
+            .spm-backdrop { animation: sp-backdrop 0.25s ease both; }
+            .spm-card     { animation: sp-card-in  0.45s cubic-bezier(0.34,1.4,0.64,1) both; }
+            .spm-item     { animation: sp-item-in  0.38s ease both; opacity:0; }
+            .spm-float    { animation: sp-float    2.8s  ease-in-out infinite; }
+            .spm-orb      { animation: sp-orb      4s    ease-in-out infinite; }
           `}</style>
+
           <div
-            className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300"
+            className="spm-backdrop fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
             onClick={() => setShowPremiumModal(false)}
           >
             <div
-              className="relative max-w-sm w-full bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 rounded-[3rem] shadow-2xl shadow-emerald-500/30 p-10 text-white animate-in zoom-in-90 slide-in-from-bottom-6 duration-500 overflow-hidden"
+              className="spm-card relative max-w-sm w-full bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 rounded-[3rem] shadow-2xl shadow-emerald-500/30 p-10 text-white overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
-              {/* Background orbs */}
-              <div className="sp-orb absolute -top-10 -right-10 w-48 h-48 bg-emerald-300 rounded-full blur-3xl" />
-              <div className="sp-orb absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-400 rounded-full blur-3xl" style={{ animationDelay: '1.4s' }} />
+              {/* Orbs */}
+              <div className="spm-orb absolute -top-10 -right-10 w-48 h-48 bg-emerald-300 rounded-full blur-3xl pointer-events-none" />
+              <div className="spm-orb absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-400 rounded-full blur-3xl pointer-events-none" style={{ animationDelay:'1.6s' }} />
 
               <button onClick={() => setShowPremiumModal(false)} className="absolute top-6 right-6 p-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-colors border border-white/20">
                 <X size={15} />
               </button>
 
               <div className="relative z-10 flex flex-col items-center text-center gap-5">
-                {/* Floating star */}
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-[1.8rem] flex items-center justify-center shadow-2xl border border-white/25">
-                  <span className="sp-star-float inline-block">
+                {/* Star */}
+                <div className="spm-item w-20 h-20 bg-white/20 backdrop-blur-sm rounded-[1.8rem] flex items-center justify-center shadow-2xl border border-white/25" style={{ animationDelay:'0ms' }}>
+                  <span className="spm-float inline-block">
                     <Sparkles size={38} className="text-yellow-300 drop-shadow-lg" />
                   </span>
                 </div>
 
-                {/* Title — fades in */}
-                <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '80ms', animationFillMode: 'both' }}>
+                {/* Title */}
+                <div className="spm-item" style={{ animationDelay:'80ms' }}>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-2">Early Adopter</p>
                   <h3 className="text-3xl font-black uppercase tracking-tight leading-tight">Premium<br/>Para Siempre</h3>
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-white/80 leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '180ms', animationFillMode: 'both' }}>
+                <p className="spm-item text-sm text-white/80 leading-relaxed font-medium" style={{ animationDelay:'160ms' }}>
                   Gracias por ser uno de los primeros usuarios de{' '}
                   <span className="font-black text-white">SplitPay</span>.
                   Como fundador, tendrás acceso premium de por vida — sin cargos, sin vencimientos.
                 </p>
 
-                {/* Staggered feature list */}
+                {/* Staggered features */}
                 <div className="w-full space-y-2 pt-1">
-                  {['Eventos ilimitados', 'Chat en tiempo real', 'Recibos PDF', 'Gastos colaborativos', 'Soporte prioritario'].map((f, i) => (
+                  {['Eventos ilimitados','Chat en tiempo real','Recibos PDF','Gastos colaborativos','Soporte prioritario'].map((f, i) => (
                     <div
                       key={f}
-                      className="flex items-center gap-3 px-4 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl border border-white/20 animate-in fade-in slide-in-from-bottom-3 duration-400"
-                      style={{ animationDelay: `${280 + i * 75}ms`, animationFillMode: 'both' }}
+                      className="spm-item flex items-center gap-3 px-4 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl border border-white/20"
+                      style={{ animationDelay: `${250 + i * 80}ms` }}
                     >
                       <div className="w-5 h-5 rounded-full bg-emerald-400/40 border border-emerald-200/50 flex items-center justify-center shrink-0">
                         <Check size={11} className="text-emerald-100" />
@@ -645,11 +658,11 @@ export default function Settings() {
                   ))}
                 </div>
 
-                {/* CTA button */}
+                {/* CTA */}
                 <button
                   onClick={() => setShowPremiumModal(false)}
-                  className="animate-in fade-in slide-in-from-bottom-3 duration-500 w-full py-4 bg-white text-emerald-600 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-white/90 active:scale-95 transition-all shadow-xl shadow-black/20 mt-1 flex items-center justify-center gap-2"
-                  style={{ animationDelay: '660ms', animationFillMode: 'both' }}
+                  className="spm-item w-full py-4 bg-white text-emerald-600 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-white/90 active:scale-95 transition-all shadow-xl shadow-black/20 mt-1 flex items-center justify-center gap-2"
+                  style={{ animationDelay:'670ms' }}
                 >
                   <Zap size={14} className="text-emerald-500" /> Entendido
                 </button>
