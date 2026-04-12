@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import Logo from './Logo';
 import { NotificationBell } from './NotificationsPanel';
 import pb from '../lib/pocketbase';
@@ -35,6 +36,7 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <aside className="w-72 h-screen fixed left-0 top-0 bg-white dark:bg-gray-950 border-r border-slate-100 dark:border-gray-900 flex flex-col p-6 z-40 transition-colors duration-500">
@@ -44,28 +46,28 @@ const Sidebar = () => {
 
       <nav className="flex-1 flex flex-col gap-2">
         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-600 mb-2 px-4">
-          Navegación
+          {t('nav.section_nav')}
         </div>
-        <SidebarItem to="/" icon={LayoutDashboard} label="Dashboard" />
-        <SidebarItem to="/events" icon={Calendar} label="Eventos" />
-        <SidebarItem to="/members" icon={Users} label="Miembros" />
-        <SidebarItem to="/activity" icon={Activity} label="Actividad" />
+        <SidebarItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')} />
+        <SidebarItem to="/events" icon={Calendar} label={t('nav.events')} />
+        <SidebarItem to="/members" icon={Users} label={t('nav.members')} />
+        <SidebarItem to="/activity" icon={Activity} label={t('nav.activity')} />
         <NotificationBell />
 
         <div className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-600 mb-2 px-4">
-          Sistema
+          {t('nav.section_sys')}
         </div>
-        <SidebarItem to="/settings" icon={Settings} label="Ajustes" />
+        <SidebarItem to="/settings" icon={Settings} label={t('nav.settings')} />
       </nav>
 
       <div className="mt-auto flex flex-col gap-4 pt-6 border-t border-slate-100 dark:border-gray-900">
         {/* Theme Toggle in Sidebar */}
-        <button 
+        <button
           onClick={toggleTheme}
           className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800/50 transition-colors"
         >
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          <span className="text-sm tracking-wide">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+          <span className="text-sm tracking-wide">{theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}</span>
         </button>
 
         {/* User Profile */}

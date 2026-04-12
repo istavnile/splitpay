@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import { Button } from './UI';
 import Onboarding from './Onboarding';
 import { MobileNotificationBell } from './NotificationsPanel';
+import Logo from './Logo';
 
 const MainLayout = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,8 +35,7 @@ const MainLayout = ({ children }) => {
       {/* Mobile Header */}
       <div className="lg:hidden sticky top-0 z-50 glass px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-gray-900">
         <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
-            <span className="font-bold dark:text-white">SplitPay</span>
+          <Logo />
         </div>
         <div className="flex items-center gap-1">
           <MobileNotificationBell />

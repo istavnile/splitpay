@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import pb from '../lib/pocketbase';
 import { Button, Card, Input, StatusModal, Modal } from '../components/UI';
-import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X, CreditCard } from 'lucide-react';
+import { User, Camera, Lock, Shield, Smartphone, Globe, Bell, Phone, Building2, Plus, Trash2, X, CreditCard, Check, Sparkles } from 'lucide-react';
 import AvatarCropper from '../components/AvatarCropper';
 
 export default function Settings() {
   const { user, refresh, loading: authLoading } = useAuth();
+  const { lang, changeLang, t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  // Preferences stored in localStorage
+  const [notifEnabled, setNotifEnabled] = useState(() => localStorage.getItem('sp_notif_enabled') !== 'false');
+  const [pushEnabled, setPushEnabled]   = useState(() => localStorage.getItem('sp_push_enabled') === 'true');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [cropFile, setCropFile] = useState(null);   // raw file waiting to be cropped
   const [croppedBlob, setCroppedBlob] = useState(null); // final blob ready to upload
@@ -414,26 +421,77 @@ export default function Settings() {
                  </div>
                  <h4 className="text-xl font-black tracking-tight uppercase">Plan Premium Activado</h4>
                  <p className="text-sm text-indigo-100 mb-4 opacity-80">Tienes acceso a todas las funciones colaborativas y almacenamiento ilimitado de recibos.</p>
-                 <Button variant="secondary" className="bg-white text-indigo-600 hover:bg-white/90 border-none">Ver Suscripción</Button>
+                 <Button variant="secondary" onClick={() => setShowPremiumModal(true)} className="bg-white text-indigo-600 hover:bg-white/90 border-none">{t('settings.viewSub')}</Button>
               </div>
            </Card>
 
            <Card className="border-none bg-white/70 dark:bg-gray-900/50 backdrop-blur-md" hover={false}>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-6">Preferencias</h3>
-              <div className="space-y-4">
-                 {[
-                    { icon: Globe, label: 'Idioma', value: 'Español' },
-                    { icon: Bell, label: 'Notificaciones', value: 'Activadas' },
-                    { icon: Smartphone, label: 'App Móvil', value: 'Sincronizada' },
-                 ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors cursor-pointer group">
-                       <div className="flex items-center gap-3">
-                          <item.icon size={18} className="text-slate-400 group-hover:text-emerald-500" />
-                          <span className="text-sm font-bold dark:text-white uppercase tracking-tight">{item.label}</span>
-                       </div>
-                       <span className="text-xs text-slate-500 dark:text-gray-500 font-bold">{item.value}</span>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-6">{t('settings.preferences')}</h3>
+              <div className="space-y-2">
+
+                {/* Language */}
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Globe size={18} className="text-slate-400" />
+                    <span className="text-sm font-bold dark:text-white uppercase tracking-tight">{t('settings.language')}</span>
+                  </div>
+                  <div className="flex bg-slate-100 dark:bg-gray-800 rounded-lg p-0.5 gap-0.5">
+                    {[['es','ES'],['en','EN']].map(([code, lbl]) => (
+                      <button
+                        key={code}
+                        onClick={() => changeLang(code)}
+                        className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${lang === code ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      >{lbl}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Notifications */}
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Bell size={18} className={notifEnabled ? 'text-emerald-500' : 'text-slate-400'} />
+                    <div>
+                      <span className="text-sm font-bold dark:text-white uppercase tracking-tight block">{t('settings.notifications')}</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{notifEnabled ? t('settings.notifOn') : t('settings.notifOff')}</span>
                     </div>
-                 ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = !notifEnabled;
+                      setNotifEnabled(next);
+                      localStorage.setItem('sp_notif_enabled', String(next));
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${notifEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-gray-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifEnabled ? 'translate-x-5' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Push / App Móvil */}
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Smartphone size={18} className={pushEnabled ? 'text-indigo-500' : 'text-slate-400'} />
+                    <div>
+                      <span className="text-sm font-bold dark:text-white uppercase tracking-tight block">{t('settings.mobileApp')}</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{pushEnabled ? t('settings.mobileOn') : t('settings.mobileOff')}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!pushEnabled) {
+                        const perm = await Notification.requestPermission();
+                        if (perm !== 'granted') return;
+                      }
+                      const next = !pushEnabled;
+                      setPushEnabled(next);
+                      localStorage.setItem('sp_push_enabled', String(next));
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${pushEnabled ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-gray-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${pushEnabled ? 'translate-x-5' : ''}`} />
+                  </button>
+                </div>
+
               </div>
            </Card>
         </section>
@@ -518,6 +576,42 @@ export default function Settings() {
           </div>
         </form>
       </Modal>
+
+      {/* Premium Modal */}
+      {showPremiumModal && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowPremiumModal(false)}>
+          <div className="relative max-w-sm w-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-[3rem] shadow-2xl p-10 text-white animate-in zoom-in-95 duration-200 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-8 -mb-8 blur-2xl" />
+            <button onClick={() => setShowPremiumModal(false)} className="absolute top-6 right-6 p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors">
+              <X size={16} />
+            </button>
+            <div className="relative z-10 flex flex-col items-center text-center gap-5">
+              <div className="w-20 h-20 bg-white/20 rounded-[2rem] flex items-center justify-center shadow-xl">
+                <Sparkles size={40} className="text-yellow-300" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-2">Early Adopter</p>
+                <h3 className="text-3xl font-black uppercase tracking-tight leading-tight">Premium<br/>Para Siempre</h3>
+              </div>
+              <p className="text-sm text-white/80 leading-relaxed font-medium">
+                Gracias por ser uno de los primeros usuarios de <span className="font-black text-white">SplitPay</span>. Como fundador, tendrás acceso premium de por vida — sin cargos, sin vencimientos.
+              </p>
+              <div className="w-full space-y-2 pt-2">
+                {['Eventos ilimitados','Chat en tiempo real','Recibos PDF','Gastos colaborativos','Soporte prioritario'].map(f => (
+                  <div key={f} className="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-2xl">
+                    <Check size={14} className="text-emerald-300 shrink-0" />
+                    <span className="text-sm font-bold">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setShowPremiumModal(false)} className="w-full py-4 bg-white text-indigo-600 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-white/90 transition-colors shadow-xl mt-2">
+                Entendido 🎉
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <StatusModal
         isOpen={status.isOpen}

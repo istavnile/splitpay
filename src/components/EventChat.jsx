@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationsContext';
 import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
 
 // PocketBase returns "2026-04-10 12:34:56.789Z" — space instead of T
@@ -29,6 +30,7 @@ function dateGroup(dateStr) {
 
 export default function EventChat({ eventId }) {
   const { user } = useAuth();
+  const { fireBrowserNotif } = useNotifications();
   const [messages, setMessages]   = useState([]);
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(true);
@@ -59,7 +61,14 @@ export default function EventChat({ eventId }) {
             setMessages(prev => {
               if (prev.some(m => m.id === full.id)) return prev;
               const next = [...prev, full];
-              if (!open) setUnread(next.length - lastSeenCount.current);
+              if (!open) {
+                setUnread(next.length - lastSeenCount.current);
+                // Browser notification for messages from others
+                if (full.emisor_id !== user?.id) {
+                  const sender = full.expand?.emisor_id?.name || 'Alguien';
+                  fireBrowserNotif(`💬 ${sender}`, full.mensaje || '...');
+                }
+              }
               return next;
             });
           })

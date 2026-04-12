@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { NotificationsProvider } from './context/NotificationsContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EventDetail from './pages/EventDetail';
@@ -31,7 +32,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes (Wrapped in MainLayout) */}
-        <Route element={isValid ? <NotificationsProvider><MainLayout><Outlet /></MainLayout></NotificationsProvider> : <Navigate to="/login" />}>
+        <Route element={isValid ? <LanguageProvider><NotificationsProvider><MainLayout><Outlet /></MainLayout></NotificationsProvider></LanguageProvider> : <Navigate to="/login" />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/settings" element={<Settings />} />

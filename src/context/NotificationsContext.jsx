@@ -9,6 +9,19 @@ export function NotificationsProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const fireBrowserNotif = useCallback((title, body) => {
+    if (localStorage.getItem('sp_push_enabled') !== 'true') return;
+    if (Notification.permission !== 'granted') return;
+    try {
+      new Notification(title, {
+        body,
+        icon: '/icon.png',
+        badge: '/favicon.png',
+        tag: 'splitpay-notif',
+      });
+    } catch (_) {}
+  }, []);
+
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
@@ -33,6 +46,14 @@ export function NotificationsProvider({ children }) {
     pb.collection('mensajes').subscribe('*', (e) => {
       if (e.record.receptor_id !== user.id && e.record.emisor_id !== user.id) return;
       fetchNotifications();
+      // Browser push notification for incoming messages
+      if (e.action === 'create' && e.record.receptor_id === user.id) {
+        if (localStorage.getItem('sp_notif_enabled') !== 'false') {
+          const senderName = e.record.expand?.emisor_id?.name || 'SplitPay';
+          const body = e.record.contenido || 'Tienes un nuevo mensaje';
+          fireBrowserNotif(`📩 ${senderName}`, body);
+        }
+      }
     }).catch(() => {});
 
     return () => {
@@ -91,6 +112,7 @@ export function NotificationsProvider({ children }) {
       markAllAsRead,
       deleteNotification,
       refresh: fetchNotifications,
+      fireBrowserNotif,
     }}>
       {children}
     </NotificationsContext.Provider>
