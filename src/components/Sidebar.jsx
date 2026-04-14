@@ -33,13 +33,13 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
   </NavLink>
 );
 
-const Sidebar = () => {
+const Sidebar = ({ mobile = false }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
 
   return (
-    <aside className="w-72 h-screen fixed left-0 top-0 bg-white dark:bg-gray-950 border-r border-slate-100 dark:border-gray-900 flex flex-col p-6 z-40 transition-colors duration-500">
+    <aside className={`w-72 bg-white dark:bg-gray-950 border-r border-slate-100 dark:border-gray-900 flex flex-col p-6 z-40 transition-colors duration-500 ${mobile ? 'relative h-full' : 'fixed left-0 top-0 h-screen'}`}>
       <div className="mb-10 px-2 mt-2">
         <Logo />
       </div>

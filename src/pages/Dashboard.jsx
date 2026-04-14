@@ -265,67 +265,59 @@ export default function Dashboard() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-          {filteredEvents.map((event) => (
-            <Link
-              key={event.id}
-              to={`/event/${event.id}`}
-              className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2rem] md:rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
-            >
-              <div className={`h-20 md:h-28 bg-gradient-to-br ${getEventColorTw(event.id)} relative flex items-center justify-between px-5 md:px-8`}>
-                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-xl md:text-2xl shadow-lg">
-                    {event.nombre_evento?.[0]?.toUpperCase()}
-                  </div>
-                  {event.creado_por === user.id && (
-                  <div className="flex gap-2 relative z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                     <button
-                       onClick={(e) => archiveEvent(e, event.id, event.archivado)}
-                       className="w-9 h-9 bg-white/20 hover:bg-white/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
-                       title={event.archivado ? 'Desarchivar' : 'Archivar'}
-                     >
-                        <AlertCircle size={16} />
-                     </button>
-                     <button
-                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDelete({ open: true, id: event.id }); }}
-                       className="w-9 h-9 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
-                       title="Eliminar"
-                     >
-                        <Trash2 size={16} />
-                     </button>
-                  </div>
-                  )}
-              </div>
+          {filteredEvents.map((event) => {
+            const dateStr = event.fecha_evento
+              ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+              : event.fecha_creacion
+              ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+              : null;
+            return (
+              <Link
+                key={event.id}
+                to={`/event/${event.id}`}
+                className={`group flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-gray-800 hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden ${event.archivado ? 'opacity-50 grayscale-[0.4]' : ''}`}
+              >
+                {/* Thin color accent strip */}
+                <div className={`h-1 w-full bg-gradient-to-r ${getEventColorTw(event.id)}`} />
 
-              <div className="p-4 md:p-8 md:pt-6 flex-1 bg-white dark:bg-gray-900">
-                 <div className="mb-3 md:mb-4">
-                    <h3 className="text-base md:text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase leading-tight">{event.nombre_evento}</h3>
-                    <div className="flex items-center gap-2 mt-1 md:mt-2">
-                       <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-                          {event.fecha_evento
-                            ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : event.fecha_creacion
-                            ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : 'Sin fecha'}
-                       </p>
-                       {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
-                    </div>
-                 </div>
+                <div className="p-5 flex flex-col flex-1 gap-3">
+                  {/* Title row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tight uppercase leading-snug flex-1">{event.nombre_evento}</h3>
+                    {event.creado_por === user.id && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0 -mr-1">
+                        <button onClick={e => archiveEvent(e, event.id, event.archivado)}
+                          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800 rounded-xl transition-all" title={event.archivado ? 'Desarchivar' : 'Archivar'}>
+                          <AlertCircle size={14} />
+                        </button>
+                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); setConfirmDelete({ open: true, id: event.id }); }}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all" title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                 <div className="mt-auto pt-3 md:pt-6 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
-                    <div className="flex -space-x-1.5 md:-space-x-2">
-                       {[1,2,3].map(i => (
-                         <div key={i} className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-950 flex items-center justify-center text-[9px] md:text-[10px] font-black text-slate-400">
-                            {i}
-                         </div>
-                       ))}
-                    </div>
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                       Ver detalle <ChevronRight size={12} />
+                  {/* Meta */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {dateStr && (
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                        <Calendar size={10} /> {dateStr}
+                      </span>
+                    )}
+                    {event.archivado && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-gray-800 text-slate-400 uppercase">Archivado</span>}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-auto pt-3 border-t border-slate-50 dark:border-gray-800 flex items-center justify-end">
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                      Ver detalle <ChevronRight size={12} />
                     </span>
-                 </div>
-              </div>
-            </Link>
-          ))}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
 

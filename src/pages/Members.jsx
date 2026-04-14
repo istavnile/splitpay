@@ -101,25 +101,21 @@ export default function Members() {
         }
       });
 
-      // 5. Cross-reference emails against users collection to backfill isUser/userId
-      //    (participants added before account creation lack id_usuario)
-      const unlinked = Object.values(uniqueMap).filter(m => !m.isUser && m.email);
-      if (unlinked.length > 0) {
-        try {
-          const emailFilter = unlinked.map(m => `email = "${m.email.toLowerCase()}"`).join(' || ');
-          const foundUsers = await pb.collection('users').getFullList({ filter: emailFilter, fields: 'id,email,name' });
-          foundUsers.forEach(u => {
-            const key = Object.keys(uniqueMap).find(k => uniqueMap[k].email?.toLowerCase() === u.email.toLowerCase());
-            if (key) {
-              uniqueMap[key].isUser = true;
-              uniqueMap[key].userId = u.id;
-              if (!uniqueMap[key].nombre || uniqueMap[key].nombre === uniqueMap[key].email.split('@')[0]) {
-                uniqueMap[key].nombre = u.name || uniqueMap[key].nombre;
-              }
-            }
-          });
-        } catch (_) {}
-      }
+      // 5. Cross-reference emails against already-fetched invs (members records)
+      //    to backfill isUser/userId — avoids querying the users collection
+      //    which is restricted by PocketBase listRule for regular users.
+      Object.values(uniqueMap).forEach(m => {
+        if (!m.isUser && m.email) {
+          const inv = invs.find(i =>
+            i.id_usuario &&
+            i.email?.toLowerCase().trim() === m.email.toLowerCase().trim()
+          );
+          if (inv) {
+            m.isUser = true;
+            m.userId = inv.id_usuario;
+          }
+        }
+      });
 
       setMembers(Object.values(uniqueMap));
     } catch (err) {

@@ -6,66 +6,64 @@ import { ConfirmDialog } from '../components/UI';
 import { Calendar, ChevronRight, AlertCircle, Trash2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-function EventCard({ event, user, onArchive, onDelete, creatorName }) {
+function EventCard({ event, user, onArchive, onDelete, creatorName, participantCount }) {
   const isOwner = event.creado_por === user.id;
+  const dateStr = event.fecha_evento
+    ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+    : event.fecha_creacion
+    ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
 
   return (
     <Link
       to={`/event/${event.id}`}
-      className={`group p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border-none shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer rounded-[2.5rem] ${event.archivado ? 'opacity-60 grayscale-[0.5]' : ''}`}
+      className={`group flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-gray-800 hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden ${event.archivado ? 'opacity-50 grayscale-[0.4]' : ''}`}
     >
-      <div className={`h-28 bg-gradient-to-br ${getEventColorTw(event.id)} relative flex items-center justify-between px-8`}>
-        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 font-black text-2xl shadow-lg">
-          {event.nombre_evento?.[0]?.toUpperCase()}
+      {/* Thin color accent strip */}
+      <div className={`h-1 w-full bg-gradient-to-r ${getEventColorTw(event.id)}`} />
+
+      <div className="p-5 flex flex-col flex-1 gap-3">
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tight uppercase leading-snug flex-1">{event.nombre_evento}</h3>
+          {/* Owner actions */}
+          {isOwner && (
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0 -mr-1">
+              <button onClick={e => { e.preventDefault(); e.stopPropagation(); onArchive(event.id, event.archivado); }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800 rounded-xl transition-all" title={event.archivado ? 'Desarchivar' : 'Archivar'}>
+                <AlertCircle size={14} />
+              </button>
+              <button onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(event.id); }}
+                className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all" title="Eliminar">
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Creator badge for shared events */}
-        {!isOwner && creatorName && (
-          <div className="relative z-10 flex items-center gap-1.5 bg-black/25 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
-            <Users size={10} className="text-white/70" />
-            <span className="text-[10px] font-black text-white/80 uppercase tracking-wide">{creatorName}</span>
-          </div>
-        )}
-
-        {/* Archive/delete for owned events */}
-        {isOwner && (
-          <div className="flex gap-2 relative z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onArchive(event.id, event.archivado); }}
-              className="w-9 h-9 bg-white/20 hover:bg-white/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
-              title={event.archivado ? 'Desarchivar' : 'Archivar'}
-            >
-              <AlertCircle size={16} />
-            </button>
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(event.id); }}
-              className="w-9 h-9 bg-rose-500/20 hover:bg-rose-500/40 rounded-xl text-white backdrop-blur-md flex items-center justify-center transition-colors"
-              title="Eliminar"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="p-8 pt-6 flex-1 bg-white dark:bg-gray-900">
-        <div className="mb-4">
-          <h3 className="text-xl font-black dark:text-white group-hover:text-emerald-500 transition-colors tracking-tighter uppercase">{event.nombre_evento}</h3>
-          <div className="flex items-center gap-2 mt-2">
-            <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-              {event.fecha_evento
-                ? new Date(event.fecha_evento.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
-                : event.fecha_creacion
-                ? new Date(event.fecha_creacion.slice(0,10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
-                : 'Sin fecha'}
-            </p>
-            {event.archivado && <span className="bg-slate-100 dark:bg-gray-800 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Archivado</span>}
-          </div>
+        {/* Meta */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {dateStr && (
+            <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+              <Calendar size={10} /> {dateStr}
+            </span>
+          )}
+          {!isOwner && creatorName && (
+            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 uppercase tracking-wide flex items-center gap-1">
+              <Users size={9} /> {creatorName}
+            </span>
+          )}
+          {event.archivado && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-gray-800 text-slate-400 uppercase">Archivado</span>}
         </div>
 
-        <div className="mt-auto pt-6 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
-          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+        {/* Footer */}
+        <div className="mt-auto pt-3 border-t border-slate-50 dark:border-gray-800 flex items-center justify-between">
+          {participantCount != null ? (
+            <span className="text-[10px] font-bold text-slate-400 dark:text-gray-600 flex items-center gap-1">
+              <Users size={10} /> {participantCount} {participantCount === 1 ? 'persona' : 'personas'}
+            </span>
+          ) : <span />}
+          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
             Ver detalle <ChevronRight size={12} />
           </span>
         </div>
