@@ -572,7 +572,7 @@ export default function EventDetail() {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
 
       {/* Event Header Card — sticky */}
-      <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem] sticky top-0 z-30" hover={false}>
+      <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem] lg:sticky lg:top-0 lg:z-30" hover={false}>
           <div style={{ background: getEventColorCss(id) }} className="p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
