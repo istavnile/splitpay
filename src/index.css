@@ -51,25 +51,7 @@ input[type='number'] {
   @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-800/50 shadow-xl;
 }
 
-/* Brushed aluminum texture for light mode background */
+/* Light mode background */
 .bg-brushed-metal {
   background-color: #cdd1d9;
-  background-image:
-    repeating-linear-gradient(
-      92deg,
-      transparent 0px,
-      rgba(255,255,255,0.18) 1px,
-      transparent 2px,
-      transparent 5px,
-      rgba(0,0,0,0.04) 6px,
-      transparent 7px,
-      transparent 12px
-    ),
-    repeating-linear-gradient(
-      180deg,
-      transparent 0px,
-      rgba(255,255,255,0.06) 1px,
-      transparent 2px,
-      transparent 8px
-    );
 }
