@@ -14,8 +14,20 @@ import {
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
   X, AlertCircle, Calendar,
   Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone, FileDown,
-  Eye, Copy, Link2, Download, ChevronDown
+  Eye, Copy, Link2, Download, ChevronDown,
+  Utensils, Car, BedDouble, Music2, ShoppingBag, HeartPulse, Package
 } from 'lucide-react';
+
+const CATEGORIES = [
+  { value: '',               label: 'Sin categoría',   icon: null },
+  { value: 'Comida',         label: 'Comida',           icon: Utensils },
+  { value: 'Transporte',     label: 'Transporte',       icon: Car },
+  { value: 'Alojamiento',    label: 'Alojamiento',      icon: BedDouble },
+  { value: 'Entretenimiento',label: 'Entretenimiento',  icon: Music2 },
+  { value: 'Compras',        label: 'Compras',          icon: ShoppingBag },
+  { value: 'Salud',          label: 'Salud',            icon: HeartPulse },
+  { value: 'Otro',           label: 'Otro',             icon: Package },
+];
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -757,19 +769,24 @@ export default function EventDetail() {
                          onClick={() => setCatOpen(o => !o)}
                          className="relative z-20 w-full flex items-center justify-between bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-400/20 rounded-2xl px-3 h-11 text-[11px] font-black text-white transition-all"
                        >
-                         <span className="truncate">{categoria || <span className="text-emerald-300/50 font-bold">Opcional</span>}</span>
+                         <span className="flex items-center gap-1.5 truncate">
+                           {(() => { const c = CATEGORIES.find(c => c.value === categoria); const Icon = c?.icon; return Icon ? <Icon size={12} className="shrink-0" /> : null; })()}
+                           {categoria || <span className="text-emerald-300/50 font-bold">Opcional</span>}
+                         </span>
                          <ChevronDown size={12} className={`ml-1 shrink-0 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
                        </button>
                        {catOpen && (
                          <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-950/80 backdrop-blur-xl border border-emerald-700/30 rounded-2xl overflow-hidden shadow-2xl z-20">
-                           {['', '🍽️ Comida', '🚗 Transporte', '🏨 Alojamiento', '🎉 Entretenimiento', '🛍️ Compras', '💊 Salud', '📦 Otro'].map(cat => (
+                           {CATEGORIES.map(({ value, label, icon: Icon }) => (
                              <button
-                               key={cat || '__none__'}
+                               key={value || '__none__'}
                                type="button"
-                               onClick={() => { setCategoria(cat); setCatOpen(false); }}
-                               className={`w-full text-left px-4 py-2 text-[11px] font-black transition-all ${categoria === cat ? 'bg-emerald-700/60 text-white' : 'text-emerald-100 hover:bg-emerald-800'}`}
+                               onClick={() => { setCategoria(value); setCatOpen(false); }}
+                               className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-black transition-all ${categoria === value ? 'bg-emerald-700/60 text-white' : 'text-emerald-100 hover:bg-emerald-800/60'}`}
                              >
-                               {cat || '— Sin categoría'}
+                               {Icon ? <Icon size={13} className="shrink-0 opacity-70" /> : <span className="w-[13px]" />}
+                               {label}
+                               {categoria === value && <Check size={11} className="ml-auto text-emerald-300" />}
                              </button>
                            ))}
                          </div>
