@@ -3,7 +3,7 @@ import pb from '../lib/pocketbase';
 import { getEventColorTw } from '../utils/eventColor';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/UI';
-import { Calendar, ChevronRight, AlertCircle, Trash2, Users } from 'lucide-react';
+import { Calendar, ChevronRight, Archive, Trash2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function EventCard({ event, user, onArchive, onDelete, creatorName, participantCount }) {
@@ -32,7 +32,7 @@ function EventCard({ event, user, onArchive, onDelete, creatorName, participantC
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0 -mr-1">
               <button onClick={e => { e.preventDefault(); e.stopPropagation(); onArchive(event.id, event.archivado); }}
                 className="p-1.5 text-white/60 hover:text-white hover:bg-white/15 rounded-xl transition-all" title={event.archivado ? 'Desarchivar' : 'Archivar'}>
-                <AlertCircle size={14} />
+                <Archive size={14} />
               </button>
               <button onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(event.id); }}
                 className="p-1.5 text-white/60 hover:text-rose-300 hover:bg-rose-500/20 rounded-xl transition-all" title="Eliminar">

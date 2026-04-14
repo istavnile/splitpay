@@ -3,7 +3,7 @@ import pb from '../lib/pocketbase';
 import { getEventColorTw } from '../utils/eventColor';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Input, ConfirmDialog } from '../components/UI';
-import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { Plus, Calendar, Share2, Trash2, ChevronRight, User, Wallet, TrendingUp, Users, Archive } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const SummaryCard = ({ title, value, icon: Icon, color, onClick }) => (
@@ -290,7 +290,7 @@ export default function Dashboard() {
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0 -mr-1">
                         <button onClick={e => archiveEvent(e, event.id, event.archivado)}
                           className="p-1.5 text-white/60 hover:text-white hover:bg-white/15 rounded-xl transition-all" title={event.archivado ? 'Desarchivar' : 'Archivar'}>
-                          <AlertCircle size={14} />
+                          <Archive size={14} />
                         </button>
                         <button onClick={e => { e.preventDefault(); e.stopPropagation(); setConfirmDelete({ open: true, id: event.id }); }}
                           className="p-1.5 text-white/60 hover:text-rose-300 hover:bg-rose-500/20 rounded-xl transition-all" title="Eliminar">
