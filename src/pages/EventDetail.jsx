@@ -713,7 +713,7 @@ export default function EventDetail() {
                       <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${payerOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {payerOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-900 border border-emerald-700/50 rounded-2xl overflow-hidden shadow-2xl z-20">
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-950/80 backdrop-blur-xl border border-emerald-700/30 rounded-2xl overflow-hidden shadow-2xl z-20">
                         {participants.map(p => (
                           <button
                             key={p.id}
@@ -761,7 +761,7 @@ export default function EventDetail() {
                          <ChevronDown size={12} className={`ml-1 shrink-0 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
                        </button>
                        {catOpen && (
-                         <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-900 border border-emerald-700/50 rounded-2xl overflow-hidden shadow-2xl z-20">
+                         <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-950/80 backdrop-blur-xl border border-emerald-700/30 rounded-2xl overflow-hidden shadow-2xl z-20">
                            {['', '🍽️ Comida', '🚗 Transporte', '🏨 Alojamiento', '🎉 Entretenimiento', '🛍️ Compras', '💊 Salud', '📦 Otro'].map(cat => (
                              <button
                                key={cat || '__none__'}
