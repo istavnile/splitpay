@@ -238,7 +238,7 @@ export default function Dashboard() {
          <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowArchived(!showArchived)}
-              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-400 hover:text-white'}`}
+              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
             >
                {showArchived ? 'Ocultar Archivados' : 'Mostrar Archivados'}
             </button>

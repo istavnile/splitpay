@@ -321,7 +321,7 @@ export default function Members() {
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center grayscale opacity-50">
            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-           <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cargando relaciones...</p>
+           <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-gray-500">Cargando relaciones...</p>
         </div>
       ) : filteredMembers.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-24 text-center bg-white/20 dark:bg-gray-900/40 border-dashed border-2 border-slate-200 dark:border-gray-800 rounded-[3rem]" hover={false}>

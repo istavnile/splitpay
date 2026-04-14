@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import pb from '../lib/pocketbase';
 import { useAuth } from './AuthContext';
 
@@ -8,8 +8,9 @@ export function NotificationsProvider({ children }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const recentNotifIds = useRef(new Set());
 
-  const fireBrowserNotif = useCallback((title, body) => {
+  const fireBrowserNotif = useCallback((title, body, tag = 'splitpay-notif') => {
     if (localStorage.getItem('sp_push_enabled') !== 'true') return;
     if (Notification.permission !== 'granted') return;
     try {
@@ -17,7 +18,7 @@ export function NotificationsProvider({ children }) {
         body,
         icon: '/icon.png',
         badge: '/favicon.png',
-        tag: 'splitpay-notif',
+        tag,
       });
     } catch (_) {}
   }, []);
@@ -56,10 +57,28 @@ export function NotificationsProvider({ children }) {
       }
     }).catch(() => {});
 
+    // Global chat subscription — fires browser notifications from any page
+    pb.collection('chat_mensajes').subscribe('*', async (e) => {
+      if (e.action !== 'create') return;
+      if (e.record.emisor_id === user.id) return;
+      // Dedup: avoid double-firing if EventChat is also mounted
+      if (recentNotifIds.current.has(e.record.id)) return;
+      recentNotifIds.current.add(e.record.id);
+      setTimeout(() => recentNotifIds.current.delete(e.record.id), 5000);
+      try {
+        const full = await pb.collection('chat_mensajes').getOne(e.record.id, { expand: 'emisor_id' });
+        const sender = full.expand?.emisor_id?.name
+          || full.expand?.emisor_id?.email?.split('@')[0]
+          || 'Alguien';
+        fireBrowserNotif(`💬 ${sender}`, full.contenido || '...', `splitpay-chat-${e.record.id_evento}`);
+      } catch (_) {}
+    }).catch(() => {});
+
     return () => {
       pb.collection('mensajes').unsubscribe('*');
+      pb.collection('chat_mensajes').unsubscribe('*');
     };
-  }, [user, fetchNotifications]);
+  }, [user, fetchNotifications, fireBrowserNotif]);
 
   const sendMessage = async (receptorId, tipo, contenido, idEvento = null) => {
     if (!user || receptorId === user.id) return;

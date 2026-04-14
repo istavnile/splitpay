@@ -30,7 +30,7 @@ function dateGroup(dateStr) {
 
 export default function EventChat({ eventId }) {
   const { user } = useAuth();
-  const { fireBrowserNotif } = useNotifications();
+  useNotifications(); // keep context alive for global chat notifications
   const [messages, setMessages]   = useState([]);
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(true);
@@ -62,14 +62,7 @@ export default function EventChat({ eventId }) {
             setMessages(prev => {
               if (prev.some(m => m.id === full.id)) return prev;
               const next = [...prev, full];
-              if (!open) {
-                setUnread(next.length - lastSeenCount.current);
-                // Browser notification for messages from others
-                if (full.emisor_id !== user?.id) {
-                  const sender = full.expand?.emisor_id?.name || 'Alguien';
-                  fireBrowserNotif(`💬 ${sender}`, full.contenido || '...');
-                }
-              }
+              if (!open) setUnread(next.length - lastSeenCount.current);
               return next;
             });
           })

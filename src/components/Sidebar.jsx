@@ -45,7 +45,7 @@ const Sidebar = ({ mobile = false }) => {
       </div>
 
       <nav className="flex-1 flex flex-col gap-2">
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-600 mb-2 px-4">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-gray-600 mb-2 px-4">
           {t('nav.section_nav')}
         </div>
         <SidebarItem to="/" icon={LayoutDashboard} label={t('nav.dashboard')} />
@@ -54,7 +54,7 @@ const Sidebar = ({ mobile = false }) => {
         <SidebarItem to="/activity" icon={Activity} label={t('nav.activity')} />
         <NotificationBell />
 
-        <div className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-gray-600 mb-2 px-4">
+        <div className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-gray-600 mb-2 px-4">
           {t('nav.section_sys')}
         </div>
         <SidebarItem to="/settings" icon={Settings} label={t('nav.settings')} />
