@@ -25,7 +25,7 @@ const MainLayout = ({ children }) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#dce0e8] dark:bg-gray-950 transition-colors duration-500">
+    <div className="min-h-screen bg-brushed-metal dark:bg-gray-950 transition-colors duration-500">
       <style>{`
         @keyframes sp-page-in {
           from { opacity: 0; transform: translateY(10px); }

@@ -559,8 +559,8 @@ export default function EventDetail() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
 
-      {/* Event Header Card */}
-      <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem]" hover={false}>
+      {/* Event Header Card — sticky */}
+      <Card className="mb-6 p-0 overflow-hidden border-none shadow-2xl shadow-emerald-500/10 rounded-[2rem] md:rounded-[2.5rem] sticky top-0 z-30" hover={false}>
           <div style={{ background: getEventColorCss(id) }} className="p-5 md:p-12 text-white relative group rounded-b-[1.5rem] md:rounded-b-[2rem]">
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
@@ -627,30 +627,15 @@ export default function EventDetail() {
              </div>
           </div>
 
-          <div className="px-5 py-4 md:p-8 grid grid-cols-3 gap-3 md:gap-8 bg-white dark:bg-gray-900">
-             <div className="flex flex-col gap-0.5 md:gap-1 md:border-r border-slate-100 dark:border-gray-800 md:pr-8">
+          {/* Stats row */}
+          <div className="px-5 py-3 md:px-8 md:py-4 grid grid-cols-3 gap-3 md:gap-8 bg-white dark:bg-gray-900 border-b border-slate-50 dark:border-gray-800">
+             <div className="flex flex-col gap-0.5 md:gap-1">
                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-gray-500">Gasto Total</span>
-                <span className="text-xl md:text-3xl font-black dark:text-white tracking-tighter">{moneda}{balance.total?.toFixed(2)}</span>
+                <span className="text-xl md:text-2xl font-black dark:text-white tracking-tighter">{moneda}{balance.total?.toFixed(2)}</span>
              </div>
-             <div className="flex flex-col gap-0.5 md:gap-1 md:border-r border-slate-100 dark:border-gray-800 md:pr-8">
-                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-gray-500">Participantes</span>
-                <div className="flex items-center gap-1 mt-0.5">
-                   <div className="flex -space-x-1.5">
-                      {participants.slice(0, 3).map(p => {
-                        const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
-                        const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
-                        return (
-                          <div key={p.id} className="relative">
-                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[9px] font-black text-slate-500">
-                               {p.nombre[0].toUpperCase()}
-                            </div>
-                            {online && <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-900" />}
-                          </div>
-                        );
-                      })}
-                   </div>
-                   <span className="text-xs font-black dark:text-white ml-1">{participants.length}</span>
-                </div>
+             <div className="flex flex-col gap-0.5 md:gap-1">
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-gray-500">Equipo</span>
+                <span className="text-xl md:text-2xl font-black dark:text-white tracking-tighter">{participants.length} <span className="text-sm font-bold text-slate-400 dark:text-gray-600">{participants.length === 1 ? 'persona' : 'personas'}</span></span>
              </div>
              <div className="flex flex-col gap-0.5 md:gap-1">
                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-gray-500">Estado</span>
@@ -660,72 +645,50 @@ export default function EventDetail() {
                 </div>
              </div>
           </div>
+
+          {/* Team chips row */}
+          <div className="px-5 py-3 md:px-8 md:py-3 flex flex-wrap items-center gap-1.5 bg-white dark:bg-gray-900">
+            {participants.map(p => {
+              const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
+              const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
+              const isOwner = event?.creado_por === user.id;
+              return (
+                <div key={p.id} className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all ${p.isObserver ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30' : 'bg-slate-50 dark:bg-gray-800/50 border-slate-100 dark:border-gray-700'}`}>
+                  <button className="relative shrink-0" title={p.id_usuario ? 'Ver datos de pago' : undefined}
+                    onClick={() => p.id_usuario && setPaymentPopup({ userId: p.id_usuario, name: p.nombre })}>
+                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center font-black text-[9px] transition-colors ${p.isObserver ? 'bg-amber-500/10 text-amber-600' : `bg-indigo-500/10 text-indigo-500 ${p.id_usuario ? 'hover:bg-indigo-500 hover:text-white' : ''}`}`}>
+                      {p.nombre[0].toUpperCase()}
+                    </div>
+                    {online && <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800 animate-pulse" />}
+                  </button>
+                  <span className="text-xs font-black dark:text-white">{p.nombre}</span>
+                  {p.isObserver && <span className="text-[8px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 flex items-center gap-0.5"><Eye size={8} /> obs</span>}
+                  {isOwner && (
+                    <button onClick={() => toggleObserver(p)}
+                      className={`p-0.5 opacity-0 group-hover:opacity-100 transition-all rounded ${p.isObserver ? 'text-amber-500 hover:text-indigo-500' : 'text-slate-300 hover:text-amber-500'}`}
+                      title={p.isObserver ? 'Convertir a participante' : 'Marcar como observador'}>
+                      <Eye size={10} />
+                    </button>
+                  )}
+                  <button onClick={() => setConfirmState({ open: true, title: '¿Quitar Participante?', message: 'No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.', onConfirm: () => removeParticipant(p.id) })}
+                    className="p-0.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all">
+                    <X size={10} />
+                  </button>
+                </div>
+              );
+            })}
+            <button onClick={() => setModals({...modals, invite: true})}
+              className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-slate-300 dark:border-gray-700 rounded-xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-[10px] tracking-widest">
+              <Plus size={11} /> Añadir
+            </button>
+          </div>
       </Card>
 
       {/* Flat grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 lg:items-start">
 
-        {/* 1. Equipo */}
-        <Card className="order-1 lg:col-start-9 lg:col-span-4 lg:row-start-3 border-none shadow-sm dark:bg-gray-900/50 p-4 md:p-5 rounded-[2rem]" hover={false}>
-           <div className="flex flex-wrap gap-2">
-              {participants.map(p => {
-                const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
-                const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
-                const isOwner = event?.creado_por === user.id;
-                return (
-                <div key={p.id} className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all ${p.isObserver ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30' : 'bg-slate-50 dark:bg-gray-800/50 border-slate-100 dark:border-gray-700'}`}>
-                   <button
-                     className="relative shrink-0"
-                     title={p.id_usuario ? 'Ver datos de pago' : undefined}
-                     onClick={() => p.id_usuario && setPaymentPopup({ userId: p.id_usuario, name: p.nombre })}
-                   >
-                      <div className={`w-5 h-5 rounded-lg flex items-center justify-center font-black text-[9px] transition-colors ${p.isObserver ? 'bg-amber-500/10 text-amber-600' : `bg-indigo-500/10 text-indigo-500 ${p.id_usuario ? 'hover:bg-indigo-500 hover:text-white' : ''}`}`}>
-                         {p.nombre[0].toUpperCase()}
-                      </div>
-                      {online && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800 animate-pulse" title="Online" />
-                      )}
-                   </button>
-                   <span className="text-xs font-black dark:text-white">{p.nombre}</span>
-                   {p.isObserver && (
-                     <span className="text-[8px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-                       <Eye size={8} /> obs
-                     </span>
-                   )}
-                   {isOwner && (
-                     <button
-                       onClick={() => toggleObserver(p)}
-                       className={`p-0.5 opacity-0 group-hover:opacity-100 transition-all rounded ${p.isObserver ? 'text-amber-500 hover:text-indigo-500' : 'text-slate-300 hover:text-amber-500'}`}
-                       title={p.isObserver ? 'Convertir a participante' : 'Marcar como observador'}
-                     >
-                       <Eye size={10} />
-                     </button>
-                   )}
-                   <button
-                     onClick={() => setConfirmState({
-                       open: true,
-                       title: '¿Quitar Participante?',
-                       message: '¿Estás seguro de que deseas quitar a este colaborador? No se borrarán sus gastos pasados pero ya no aparecerá en el cálculo actual.',
-                       onConfirm: () => removeParticipant(p.id)
-                     })}
-                     className="p-0.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                   >
-                      <X size={10} />
-                   </button>
-                </div>
-                );
-              })}
-              <button
-                onClick={() => setModals({...modals, invite: true})}
-                className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-slate-300 dark:border-gray-700 rounded-xl text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black text-[10px] tracking-widest"
-              >
-                 <Plus size={11} /> Añadir
-              </button>
-           </div>
-        </Card>
-
         {/* 2. Registrar Gasto */}
-        <Card className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 border-none shadow-xl shadow-emerald-500/10 bg-emerald-500 text-white p-5 rounded-[2rem]" hover={false}>
+        <div className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 bg-emerald-500 text-white p-5 rounded-[2rem] shadow-xl shadow-emerald-500/20 relative">
            <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
               <Plus className="text-emerald-200" /> Registrar Gasto
            </h3>
@@ -841,7 +804,7 @@ export default function EventDetail() {
                  {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
               </Button>
            </form>
-        </Card>
+        </div>
 
         {/* 3. Historial de Gastos */}
         <Card className="order-3 lg:col-start-1 lg:col-span-8 lg:row-start-1 lg:row-span-3 border-none shadow-sm dark:bg-gray-900/50 p-5 md:p-8" hover={false}>
