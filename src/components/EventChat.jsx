@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import pb from '../lib/pocketbase';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationsContext';
-import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
+import { MessageSquare, X, Send, Trash2, AlertCircle } from 'lucide-react';
 
 // PocketBase returns "2026-04-10 12:34:56.789Z" — space instead of T
 // Safari and Firefox don't parse that format, so we normalise it first.
@@ -38,6 +38,7 @@ export default function EventChat({ eventId }) {
   const [open, setOpen]           = useState(false);
   const [unread, setUnread]       = useState(0);
   const [height, setHeight]       = useState(450);
+  const [fetchError, setFetchError] = useState(false);
   const endRef   = useRef(null);
   const inputRef = useRef(null);
   const isResizing = useRef(false);
@@ -66,7 +67,7 @@ export default function EventChat({ eventId }) {
                 // Browser notification for messages from others
                 if (full.emisor_id !== user?.id) {
                   const sender = full.expand?.emisor_id?.name || 'Alguien';
-                  fireBrowserNotif(`💬 ${sender}`, full.mensaje || '...');
+                  fireBrowserNotif(`💬 ${sender}`, full.contenido || '...');
                 }
               }
               return next;
@@ -115,7 +116,11 @@ export default function EventChat({ eventId }) {
       });
       setMessages(records);
       lastSeenCount.current = records.length;
-    } catch (_) {}
+      setFetchError(false);
+    } catch (err) {
+      console.error('chat_mensajes fetch error:', err);
+      setFetchError(true);
+    }
     setLoading(false);
   };
 
@@ -220,6 +225,19 @@ export default function EventChat({ eventId }) {
             {loading ? (
               <div className="flex items-center justify-center h-full opacity-40">
                 <div className="w-6 h-6 border-3 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+              </div>
+            ) : fetchError ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 px-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center">
+                  <AlertCircle size={24} className="text-rose-400" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-rose-400">
+                  Colección no disponible
+                </p>
+                <p className="text-[9px] text-slate-400 dark:text-gray-600 leading-relaxed">
+                  Crea la colección <code className="text-violet-400">chat_mensajes</code> en PocketBase con los campos:<br/>
+                  <span className="text-slate-300 dark:text-gray-500">id_evento (relation), emisor_id (relation), contenido (text)</span>
+                </p>
               </div>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-4 opacity-30">
