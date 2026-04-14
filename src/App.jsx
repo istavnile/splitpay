@@ -11,6 +11,7 @@ import Members from './pages/Members';
 import Activity from './pages/Activity';
 import Events from './pages/Events';
 import ResetPassword from './pages/ResetPassword';
+import JoinEvent from './pages/JoinEvent';
 import MainLayout from './components/MainLayout';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/login" element={isValid ? <Navigate to="/" /> : <Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/join/:id" element={<JoinEvent />} />
 
         {/* Protected Routes (Wrapped in MainLayout) */}
         <Route element={isValid ? <LanguageProvider><NotificationsProvider><MainLayout><Outlet /></MainLayout></NotificationsProvider></LanguageProvider> : <Navigate to="/login" />}>

@@ -13,7 +13,8 @@ import {
   ArrowLeft, Plus, UserPlus, Share2, Trash2,
   Wallet, Receipt, ArrowRightLeft, CheckCircle2,
   X, AlertCircle, Users, Calendar,
-  Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone, FileDown
+  Check, CreditCard, Undo2, Upload, RefreshCw, Megaphone, FileDown,
+  Eye, Copy, Link2, Tag, Download
 } from 'lucide-react';
 
 export default function EventDetail() {
@@ -42,7 +43,12 @@ export default function EventDetail() {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [payerId, setPayerId] = useState('');
+  const [categoria, setCategoria] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Members data (with rol) for observer cross-reference
+  const [membersData, setMembersData] = useState([]);
 
   const [modals, setModals] = useState({ invite: false, settings: false });
 
@@ -161,9 +167,10 @@ export default function EventDetail() {
 
   useEffect(() => {
     if (participants.length > 0) {
+      const active = participants.filter(p => !p.isObserver);
       const perfiles = {};
-      participants.forEach(p => perfiles[p.id] = p.nombre);
-      const result = calculateBalance(expenses, participants.map(p => p.id), perfiles);
+      active.forEach(p => perfiles[p.id] = p.nombre);
+      const result = calculateBalance(expenses, active.map(p => p.id), perfiles);
       setBalance({
         transferencias: result.transferencias,
         summary: result.resumen,
@@ -182,11 +189,25 @@ export default function EventDetail() {
       }
       setEvent(eventData);
 
-      const participantsData = await pb.collection('participants').getFullList({
-        filter: `id_evento = "${id}"`,
-      });
-      setParticipants(participantsData);
-      if (participantsData.length > 0 && !payerId) setPayerId(participantsData[0].id);
+      const [participantsData, membersForRole] = await Promise.all([
+        pb.collection('participants').getFullList({ filter: `id_evento = "${id}"` }),
+        pb.collection('members').getFullList({ filter: `id_evento = "${id}"` }).catch(() => []),
+      ]);
+
+      // Attach isObserver flag based on members.rol
+      const participantsWithRole = participantsData.map(p => ({
+        ...p,
+        isObserver: membersForRole.some(m =>
+          m.rol === 'observador' && (
+            (m.id_usuario && m.id_usuario === p.id_usuario) ||
+            (m.email && p.email && m.email.toLowerCase() === p.email.toLowerCase())
+          )
+        ),
+      }));
+
+      setParticipants(participantsWithRole);
+      setMembersData(membersForRole);
+      if (participantsWithRole.length > 0 && !payerId) setPayerId(participantsWithRole[0].id);
 
       const expensesData = await pb.collection('expenses').getFullList({
         filter: `id_evento = "${id}"`,
@@ -252,11 +273,13 @@ export default function EventDetail() {
         pagado_por: payerId,
         creado_por: user.id,
         estado: 'activo',
+        ...(categoria ? { categoria } : {}),
       };
       await pb.collection('expenses').create(data, { expand: 'pagado_por' });
       setToast({ isOpen: true, message: `"${description}" — ${moneda}${parseFloat(amount).toFixed(2)}`, type: 'success' });
       setAmount('');
       setDescription('');
+      setCategoria('');
       fetchData();
     } catch (err) {
       setStatus({
@@ -437,6 +460,91 @@ export default function EventDetail() {
     }
   };
 
+  // ── Observer toggle ────────────────────────────────────────────────────────
+  const toggleObserver = async (participant) => {
+    const newRol = participant.isObserver ? 'editor' : 'observador';
+    // Find existing members record
+    const existing = membersData.find(m =>
+      (m.id_usuario && m.id_usuario === participant.id_usuario) ||
+      (m.email && participant.email && m.email.toLowerCase() === participant.email.toLowerCase())
+    );
+    try {
+      if (existing) {
+        await pb.collection('members').update(existing.id, { rol: newRol });
+        setMembersData(prev => prev.map(m => m.id === existing.id ? { ...m, rol: newRol } : m));
+      } else {
+        const created = await pb.collection('members').create({
+          id_evento: id,
+          email: participant.email || '',
+          id_usuario: participant.id_usuario || '',
+          rol: newRol,
+        });
+        setMembersData(prev => [...prev, created]);
+      }
+      setParticipants(prev => prev.map(p =>
+        p.id === participant.id ? { ...p, isObserver: newRol === 'observador' } : p
+      ));
+    } catch (err) {
+      setToast({ isOpen: true, message: 'Error al cambiar rol: ' + err.message, type: 'error' });
+    }
+  };
+
+  // ── CSV Export ──────────────────────────────────────────────────────────────
+  const exportCSV = () => {
+    const cur = event?.moneda || '$';
+    const rows = [];
+
+    rows.push(['EVENTO', event?.nombre_evento || '']);
+    rows.push(['MONEDA', cur]);
+    rows.push(['TOTAL', balance.total?.toFixed(2) || '0.00']);
+    rows.push([]);
+    rows.push(['GASTOS']);
+    rows.push(['Descripción', 'Categoría', 'Pagado por', 'Monto']);
+    expenses.forEach(exp => {
+      const payerName = exp.expand?.pagado_por?.nombre
+        || participants.find(p => p.id === exp.pagado_por)?.nombre
+        || exp.pagado_por;
+      rows.push([
+        exp.descripcion,
+        exp.categoria || '',
+        payerName,
+        exp.monto.toFixed(2),
+      ]);
+    });
+
+    rows.push([]);
+    rows.push(['BALANCE']);
+    rows.push(['Participante', 'Rol', 'Pagado', 'Balance']);
+    balance.summary.forEach(s => {
+      const p = participants.find(pp => pp.nombre === s.nombre);
+      rows.push([s.nombre, p?.isObserver ? 'Observador' : 'Participante', s.pagado.toFixed(2), s.balance.toFixed(2)]);
+    });
+
+    rows.push([]);
+    rows.push(['TRANSFERENCIAS']);
+    rows.push(['De', 'Para', 'Monto']);
+    balance.transferencias.forEach(t => {
+      rows.push([t.de, t.para, t.monto.toFixed(2)]);
+    });
+
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${event?.nombre_evento || 'evento'}_splitpay.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Copy join link ──────────────────────────────────────────────────────────
+  const copyJoinLink = () => {
+    const url = `${window.location.origin}/join/${id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
        <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
@@ -564,14 +672,15 @@ export default function EventDetail() {
               {participants.map(p => {
                 const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
                 const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;
+                const isOwner = event?.creado_por === user.id;
                 return (
-                <div key={p.id} className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-gray-800/50 rounded-xl border border-slate-100 dark:border-gray-700">
+                <div key={p.id} className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all ${p.isObserver ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30' : 'bg-slate-50 dark:bg-gray-800/50 border-slate-100 dark:border-gray-700'}`}>
                    <button
                      className="relative shrink-0"
                      title={p.id_usuario ? 'Ver datos de pago' : undefined}
                      onClick={() => p.id_usuario && setPaymentPopup({ userId: p.id_usuario, name: p.nombre })}
                    >
-                      <div className={`w-5 h-5 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-black text-[9px] ${p.id_usuario ? 'hover:bg-indigo-500 hover:text-white transition-colors' : ''}`}>
+                      <div className={`w-5 h-5 rounded-lg flex items-center justify-center font-black text-[9px] transition-colors ${p.isObserver ? 'bg-amber-500/10 text-amber-600' : `bg-indigo-500/10 text-indigo-500 ${p.id_usuario ? 'hover:bg-indigo-500 hover:text-white' : ''}`}`}>
                          {p.nombre[0].toUpperCase()}
                       </div>
                       {online && (
@@ -579,6 +688,20 @@ export default function EventDetail() {
                       )}
                    </button>
                    <span className="text-xs font-black dark:text-white">{p.nombre}</span>
+                   {p.isObserver && (
+                     <span className="text-[8px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                       <Eye size={8} /> obs
+                     </span>
+                   )}
+                   {isOwner && (
+                     <button
+                       onClick={() => toggleObserver(p)}
+                       className={`p-0.5 opacity-0 group-hover:opacity-100 transition-all rounded ${p.isObserver ? 'text-amber-500 hover:text-indigo-500' : 'text-slate-300 hover:text-amber-500'}`}
+                       title={p.isObserver ? 'Convertir a participante' : 'Marcar como observador'}
+                     >
+                       <Eye size={10} />
+                     </button>
+                   )}
                    <button
                      onClick={() => setConfirmState({
                        open: true,
@@ -634,6 +757,23 @@ export default function EventDetail() {
                  />
               </div>
               <div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 flex items-center gap-1">
+                   <Tag size={9} /> Categoría <span className="opacity-50">(opcional)</span>
+                 </label>
+                 <div className="flex flex-wrap gap-1.5">
+                   {['🍽️ Comida', '🚗 Transporte', '🏨 Alojamiento', '🎉 Entretenimiento', '🛍️ Compras', '💊 Salud', '📦 Otro'].map(cat => (
+                     <button
+                       key={cat}
+                       type="button"
+                       onClick={() => setCategoria(prev => prev === cat ? '' : cat)}
+                       className={`px-2.5 py-1 rounded-xl text-[10px] font-black transition-all ${categoria === cat ? 'bg-white text-emerald-700 shadow-lg' : 'bg-emerald-600/30 text-emerald-100 hover:bg-emerald-600/50'}`}
+                     >
+                       {cat}
+                     </button>
+                   ))}
+                 </div>
+              </div>
+              <div>
                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-2 block">Monto Total</label>
                  <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pr-4 border-r border-emerald-600/30 text-emerald-100 font-black z-10">
@@ -666,7 +806,15 @@ export default function EventDetail() {
               <h3 className="text-base font-black dark:text-white tracking-tight flex items-center gap-2 uppercase">
                  <Receipt className="text-emerald-500" /> Historial de Gastos
               </h3>
-              <button className="text-xs font-black text-emerald-500 hover:scale-105 transition-transform uppercase tracking-widest">Filtrar</button>
+              {expenses.length > 0 && (
+                <button
+                  onClick={exportCSV}
+                  className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-emerald-500 uppercase tracking-widest transition-colors"
+                  title="Exportar CSV"
+                >
+                  <Download size={13} /> CSV
+                </button>
+              )}
            </div>
            {expenses.length === 0 ? (
              <div className="flex flex-col items-center justify-center py-12 grayscale opacity-40">
@@ -683,9 +831,14 @@ export default function EventDetail() {
                         </div>
                         <div className="min-w-0">
                            <h4 className="font-black dark:text-white text-sm tracking-tight leading-none truncate">{exp.descripcion}</h4>
-                           <p className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mt-1">
-                              <span className="text-emerald-500">{exp.expand?.pagado_por?.nombre}</span>
-                           </p>
+                           <div className="flex items-center gap-2 mt-1 flex-wrap">
+                             <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{exp.expand?.pagado_por?.nombre}</span>
+                             {exp.categoria && (
+                               <span className="text-[9px] font-black px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-gray-800 text-slate-400 dark:text-gray-500">
+                                 {exp.categoria}
+                               </span>
+                             )}
+                           </div>
                         </div>
                      </div>
                      <div className="flex items-center gap-3 text-right shrink-0">
@@ -878,6 +1031,26 @@ export default function EventDetail() {
                 <button onClick={() => { setModals({ ...modals, invite: false }); setSelectedContacts([]); }} className="text-slate-400 hover:text-white transition-colors">
                    <X size={24} />
                 </button>
+             </div>
+
+             {/* Join link */}
+             <div className="mb-6 p-4 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-slate-100 dark:border-gray-700">
+               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-gray-500 mb-2 flex items-center gap-1">
+                 <Link2 size={10} /> Link de invitación
+               </p>
+               <div className="flex items-center gap-2">
+                 <code className="flex-1 text-[11px] font-mono text-slate-500 dark:text-gray-400 truncate">
+                   {`${window.location.origin}/join/${id}`}
+                 </code>
+                 <button
+                   type="button"
+                   onClick={copyJoinLink}
+                   className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${copiedLink ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-gray-700 text-slate-600 dark:text-gray-300 hover:bg-emerald-500 hover:text-white'}`}
+                 >
+                   {copiedLink ? <Check size={11} /> : <Copy size={11} />}
+                   {copiedLink ? 'Copiado' : 'Copiar'}
+                 </button>
+               </div>
              </div>
 
              {/* Contacts agenda */}

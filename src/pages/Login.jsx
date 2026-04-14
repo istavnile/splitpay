@@ -51,7 +51,13 @@ export default function Login() {
         await register(email, password, name);
       }
       await login(email, password);
-      navigate('/');
+      const joinRedirect = localStorage.getItem('sp_join_redirect');
+      if (joinRedirect) {
+        localStorage.removeItem('sp_join_redirect');
+        navigate(joinRedirect);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Auth error:', err);
       let msg = err.message || 'Error en la operación';
