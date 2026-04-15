@@ -35,11 +35,22 @@ export default function Activity() {
       const allEventIds = [...new Set([...owned, ...shared].map(e => e.id))];
       if (allEventIds.length === 0) { setActivities([]); return; }
 
-      const expenses = await pb.collection('expenses').getFullList({
-        filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || '),
-        expand: 'id_evento,pagado_por',
-        sort: '-created',
-      });
+      let expenses = [];
+      try {
+        expenses = await pb.collection('expenses').getFullList({
+          filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || '),
+          expand: 'id_evento,pagado_por',
+        });
+      } catch (_) {
+        // expand may fail if relation viewRules are restrictive — retry without expand
+        try {
+          expenses = await pb.collection('expenses').getFullList({
+            filter: allEventIds.map(id => `id_evento = "${id}"`).join(' || '),
+          });
+        } catch (_2) {}
+      }
+      // sort client-side (PocketBase v0.23 may not have autodate on expenses)
+      expenses.sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
       setActivities(expenses.slice(0, 30));
     } catch (err) {
       console.error('Error fetching activity:', err);

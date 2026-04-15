@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, Users, Activity,
-  Settings, LogOut, X, MoreHorizontal
+  Settings, LogOut, X, MoreHorizontal, Moon, Sun
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Onboarding from './Onboarding';
@@ -10,6 +10,7 @@ import { MobileNotificationBell } from './NotificationsPanel';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 const BOTTOM_NAV = [
   { to: '/',         icon: LayoutDashboard, label: 'Inicio'     },
@@ -25,6 +26,7 @@ const MainLayout = ({ children }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const seen = localStorage.getItem('splitpay_onboarding_seen');
@@ -86,26 +88,37 @@ const MainLayout = ({ children }) => {
           onClick={() => setMenuOpen(false)}
         >
           <div
-            className="sp-sheet absolute bottom-16 left-3 right-3 bg-white dark:bg-gray-900 rounded-3xl border border-slate-100 dark:border-gray-800 shadow-2xl overflow-hidden"
+            className="sp-sheet absolute bottom-16 left-3 right-3 bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-gray-800 shadow-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={() => { navigate('/settings'); setMenuOpen(false); }}
-              className="w-full flex items-center gap-4 px-5 py-4 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors border-b border-slate-100 dark:border-gray-800"
+              className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors border-b border-slate-100 dark:border-gray-800"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-gray-800 flex items-center justify-center">
-                <Settings size={18} className="text-slate-500 dark:text-gray-400" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center">
+                <Settings size={14} className="text-slate-500 dark:text-gray-400" />
               </div>
-              <span className="font-black text-sm uppercase tracking-wide">{t('nav.settings')}</span>
+              <span className="font-black text-xs uppercase tracking-wide">{t('nav.settings')}</span>
+            </button>
+            <button
+              onClick={() => { toggleTheme(); setMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors border-b border-slate-100 dark:border-gray-800"
+            >
+              <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center">
+                {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-500" />}
+              </div>
+              <span className="font-black text-xs uppercase tracking-wide">
+                {theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+              </span>
             </button>
             <button
               onClick={() => { logout(); setMenuOpen(false); }}
-              className="w-full flex items-center gap-4 px-5 py-4 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center">
-                <LogOut size={18} className="text-rose-500" />
+              <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center">
+                <LogOut size={14} className="text-rose-500" />
               </div>
-              <span className="font-black text-sm uppercase tracking-wide">Cerrar Sesión</span>
+              <span className="font-black text-xs uppercase tracking-wide">Cerrar Sesión</span>
             </button>
           </div>
         </div>
