@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -37,6 +37,7 @@ const Sidebar = ({ mobile = false }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <aside className={`w-72 bg-white dark:bg-gray-950 border-r border-slate-100 dark:border-gray-900 flex flex-col p-6 z-40 transition-colors duration-500 ${mobile ? 'relative h-full' : 'fixed left-0 top-0 h-screen'}`}>
@@ -71,7 +72,10 @@ const Sidebar = ({ mobile = false }) => {
         </button>
 
         {/* User Profile */}
-        <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-gray-900/50 rounded-2xl border border-slate-100 dark:border-gray-800">
+        <div
+          className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-gray-900/50 rounded-2xl border border-slate-100 dark:border-gray-800 cursor-pointer hover:border-emerald-500/30 transition-colors"
+          onClick={() => navigate('/settings')}
+        >
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold shadow-md">
             {user?.avatar ? (
               <img 
