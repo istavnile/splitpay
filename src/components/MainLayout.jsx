@@ -131,6 +131,9 @@ const MainLayout = ({ children }) => {
         </div>
       </main>
 
+      {/* Portal root for modals — covers content area only (excludes desktop sidebar) */}
+      <div id="modal-root" className="fixed inset-0 lg:left-72 pointer-events-none z-[500]" />
+
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/60 dark:bg-gray-950/60 backdrop-blur-2xl border-t border-white/30 dark:border-white/5 flex items-stretch h-16 px-2">
         {BOTTOM_NAV.map(({ to, icon: Icon, label }) => (

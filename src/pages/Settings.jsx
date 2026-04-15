@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import pb from '../lib/pocketbase';
@@ -577,8 +578,8 @@ export default function Settings() {
         </form>
       </Modal>
 
-      {/* Premium Modal */}
-      {showPremiumModal && (
+      {/* Premium Modal — rendered via portal to escape stacking context of <main> */}
+      {showPremiumModal && createPortal(
         <>
           <style>{`
             @keyframes sp-backdrop { from { opacity:0 } to { opacity:1 } }
@@ -606,11 +607,11 @@ export default function Settings() {
           `}</style>
 
           <div
-            className="spm-backdrop fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+            className="spm-backdrop absolute inset-0 flex items-start justify-center p-4 py-6 bg-black/75 backdrop-blur-md pointer-events-auto overflow-y-auto"
             onClick={() => setShowPremiumModal(false)}
           >
             <div
-              className="spm-card relative max-w-sm w-full bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 rounded-[3rem] shadow-2xl shadow-emerald-500/30 p-10 text-white overflow-hidden"
+              className="spm-card relative max-w-sm w-full my-auto bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 rounded-[3rem] shadow-2xl shadow-emerald-500/30 p-6 md:p-10 text-white overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
               {/* Orbs */}
@@ -621,9 +622,9 @@ export default function Settings() {
                 <X size={15} />
               </button>
 
-              <div className="relative z-10 flex flex-col items-center text-center gap-5">
+              <div className="relative z-10 flex flex-col items-center text-center gap-4">
                 {/* Star */}
-                <div className="spm-item w-20 h-20 bg-white/20 backdrop-blur-sm rounded-[1.8rem] flex items-center justify-center shadow-2xl border border-white/25" style={{ animationDelay:'0ms' }}>
+                <div className="spm-item w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center shadow-2xl border border-white/25" style={{ animationDelay:'0ms' }}>
                   <span className="spm-float inline-block">
                     <Sparkles size={38} className="text-yellow-300 drop-shadow-lg" />
                   </span>
@@ -669,7 +670,8 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.getElementById('modal-root') || document.body
       )}
 
       <StatusModal

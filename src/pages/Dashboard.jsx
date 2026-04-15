@@ -233,9 +233,9 @@ export default function Dashboard() {
          <SummaryCard title="Proyectos" value={stats.activity} icon={Calendar} color="bg-rose-500" onClick={() => navigate('/')} />
       </div>
 
-      <div className="flex items-center justify-between mb-8">
-         <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Eventos Recientes</h3>
-         <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between mb-8 gap-3">
+         <h3 className="text-base md:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase shrink-0">Eventos Recientes</h3>
+         <div className="flex items-center gap-3">
             <button 
               onClick={() => setShowArchived(!showArchived)}
               className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'}`}
