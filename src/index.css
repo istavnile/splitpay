@@ -53,5 +53,5 @@ input[type='number'] {
 
 /* Light mode background */
 .bg-brushed-metal {
-  background-color: #cdd1d9;
+  background: linear-gradient(to bottom, #b8bdc7 0%, #9da3af 100%);
 }
