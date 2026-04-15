@@ -46,12 +46,17 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* Glassmorphism utility */
-.glass {
-  @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-800/50 shadow-xl;
+/* Glassmorphism utility — inside @layer components so utility classes (bg-*, text-*) can override it */
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-800/50 shadow-xl;
+  }
 }
 
 /* Light mode background */
 .bg-brushed-metal {
   background: linear-gradient(to bottom, #b8bdc7 0%, #9da3af 100%);
+}
+.dark .bg-brushed-metal {
+  background: rgb(3 7 18);
 }

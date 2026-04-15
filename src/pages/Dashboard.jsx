@@ -16,8 +16,8 @@ const SummaryCard = ({ title, value, icon: Icon, color, onClick }) => (
       <Icon size={16} className="md:hidden" />
       <Icon size={20} className="hidden md:block" />
     </div>
-    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">{title}</span>
-    <span className="text-lg md:text-2xl font-black dark:text-white tracking-tight">{value}</span>
+    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-gray-500">{title}</span>
+    <span className="text-lg md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{value}</span>
   </Card>
 );
 
@@ -216,8 +216,8 @@ export default function Dashboard() {
       <div className="flex flex-row items-center justify-between gap-4 mb-6 md:mb-10">
         <div>
            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500 mb-1 block">Panel de Control</span>
-           <h2 className="text-2xl md:text-4xl font-black dark:text-white tracking-tight">Hola, {user.name || 'Usuario'}</h2>
-           <p className="text-slate-500 dark:text-gray-400 mt-1 text-sm hidden sm:block">
+           <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Hola, {user.name || 'Usuario'}</h2>
+           <p className="text-slate-600 dark:text-gray-400 mt-1 text-sm hidden sm:block">
              {loading ? 'Calculando...' : `Tienes ${events.length} eventos activos este mes.`}
            </p>
         </div>
@@ -234,11 +234,11 @@ export default function Dashboard() {
       </div>
 
       <div className="flex items-center justify-between mb-8">
-         <h3 className="text-xl font-black dark:text-white tracking-tight uppercase">Eventos Recientes</h3>
+         <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Eventos Recientes</h3>
          <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowArchived(!showArchived)}
-              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showArchived ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'}`}
             >
                {showArchived ? 'Ocultar Archivados' : 'Mostrar Archivados'}
             </button>
