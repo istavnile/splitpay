@@ -659,7 +659,7 @@ export default function EventDetail() {
           </div>
 
           {/* Team chips row */}
-          <div className="px-5 py-3 md:px-8 md:py-3 flex flex-wrap items-center gap-1.5 bg-white dark:bg-gray-900">
+          <div className="px-5 py-3 md:px-8 md:py-3 flex items-center gap-1.5 bg-white dark:bg-gray-900 overflow-x-auto scrollbar-none">
             {participants.map(p => {
               const lastSeen = p.id_usuario ? onlineUsers[p.id_usuario] : null;
               const online = lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 60000;

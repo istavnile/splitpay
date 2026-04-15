@@ -40,9 +40,9 @@ const MainLayout = ({ children }) => {
       <style>{`
         @keyframes sp-page-in {
           from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
+          to   { opacity: 1; transform: none; }
         }
-        .sp-page-transition { animation: sp-page-in 0.25s ease-out both; }
+        .sp-page-transition { animation: sp-page-in 0.25s ease-out forwards; }
 
         @keyframes sp-sheet-in {
           from { transform: translateY(100%); opacity: 0; }

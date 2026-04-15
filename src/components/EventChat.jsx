@@ -341,7 +341,7 @@ export default function EventChat({ eventId }) {
       {/* ── FAB button ────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen(o => !o)}
-        className={`fixed bottom-5 right-5 z-[150] h-14 px-4 lg:px-5 rounded-2xl shadow-2xl flex items-center gap-2.5 transition-all active:scale-95 hover:scale-105 ${
+        className={`fixed bottom-20 right-4 lg:bottom-5 lg:right-5 z-[150] h-12 lg:h-14 px-3 lg:px-5 rounded-2xl shadow-2xl flex items-center gap-2 transition-all active:scale-95 hover:scale-105 ${
           open
             ? 'bg-slate-900 dark:bg-gray-800 text-white'
             : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/30'
