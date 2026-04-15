@@ -132,7 +132,7 @@ const MainLayout = ({ children }) => {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-950/95 backdrop-blur-xl border-t border-slate-200/60 dark:border-gray-800 flex items-stretch h-16 px-2">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/60 dark:bg-gray-950/60 backdrop-blur-2xl border-t border-white/30 dark:border-white/5 flex items-stretch h-16 px-2">
         {BOTTOM_NAV.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
