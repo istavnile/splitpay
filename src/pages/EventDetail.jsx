@@ -700,44 +700,44 @@ export default function EventDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 lg:items-start">
 
         {/* 2. Registrar Gasto */}
-        <div className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 bg-emerald-500 text-white p-5 rounded-[2rem] shadow-xl shadow-emerald-500/20 relative">
-           <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-              <Plus className="text-emerald-200" /> Registrar Gasto
+        <div className="order-2 lg:col-start-9 lg:col-span-4 lg:row-start-1 bg-slate-900 dark:bg-gray-900 text-white p-5 rounded-[2rem] shadow-xl shadow-black/20 relative">
+           <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 text-white">
+              <Plus className="text-emerald-400" /> Registrar Gasto
            </h3>
            <form onSubmit={handleAddExpense} className="space-y-3">
 
               {/* ── Payer dropdown ── */}
               <div>
-                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-1.5 block">¿Quién pagó?</label>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1.5 block">¿Quién pagó?</label>
                  <div className="relative">
                     {payerOpen && <div className="fixed inset-0 z-10" onClick={() => setPayerOpen(false)} />}
                     <button
                       type="button"
                       onClick={() => setPayerOpen(o => !o)}
-                      className="relative z-20 w-full flex items-center justify-between bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-400/20 rounded-2xl px-4 h-11 text-sm font-black text-white transition-all"
+                      className="relative z-20 w-full flex items-center justify-between bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-4 h-11 text-sm font-black text-white transition-all"
                     >
                       <span className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-[10px] font-black shrink-0">
+                        <span className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">
                           {participants.find(p => p.id === payerId)?.nombre?.[0]?.toUpperCase() || '?'}
                         </span>
                         {participants.find(p => p.id === payerId)?.nombre || 'Seleccionar'}
                       </span>
-                      <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${payerOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 text-slate-400 ${payerOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {payerOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-950/80 backdrop-blur-xl border border-emerald-700/30 rounded-2xl overflow-hidden shadow-2xl z-20">
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-800/70 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-20">
                         {participants.map(p => (
                           <button
                             key={p.id}
                             type="button"
                             onClick={() => { setPayerId(p.id); setPayerOpen(false); }}
-                            className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-black transition-all text-left ${payerId === p.id ? 'bg-emerald-700/60 text-white' : 'text-emerald-100 hover:bg-emerald-800'}`}
+                            className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-black transition-all text-left ${payerId === p.id ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-200 hover:bg-white/10'}`}
                           >
                             <span className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center text-[10px] font-black shrink-0">
                               {p.nombre[0].toUpperCase()}
                             </span>
                             {p.nombre}
-                            {payerId === p.id && <Check size={12} className="ml-auto text-emerald-300" />}
+                            {payerId === p.id && <Check size={12} className="ml-auto text-emerald-400" />}
                           </button>
                         ))}
                       </div>
@@ -747,13 +747,13 @@ export default function EventDetail() {
 
               {/* ── Description ── */}
               <div>
-                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-1.5 block">¿En qué se gastó?</label>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1.5 block">¿En qué se gastó?</label>
                  <Input
                    placeholder="Ej: Combustible, Drinks..."
                    value={description}
                    onChange={e => setDescription(e.target.value)}
                    required
-                   className="bg-emerald-600/20 border-none text-white placeholder:text-emerald-300/50 h-11 rounded-2xl font-bold text-sm"
+                   className="bg-white/5 border border-white/10 text-white placeholder:text-slate-600 h-11 rounded-2xl font-bold text-sm focus:border-emerald-500/50"
                  />
               </div>
 
@@ -761,32 +761,32 @@ export default function EventDetail() {
               <div className="grid grid-cols-2 gap-2.5">
                  {/* Category dropdown */}
                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-1.5 block">Categoría</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1.5 block">Categoría</label>
                     <div className="relative">
                        {catOpen && <div className="fixed inset-0 z-10" onClick={() => setCatOpen(false)} />}
                        <button
                          type="button"
                          onClick={() => setCatOpen(o => !o)}
-                         className="relative z-20 w-full flex items-center justify-between bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-400/20 rounded-2xl px-3 h-11 text-[11px] font-black text-white transition-all"
+                         className="relative z-20 w-full flex items-center justify-between bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-3 h-11 text-[11px] font-black text-white transition-all"
                        >
                          <span className="flex items-center gap-1.5 truncate">
-                           {(() => { const c = CATEGORIES.find(c => c.value === categoria); const Icon = c?.icon; return Icon ? <Icon size={12} className="shrink-0" /> : null; })()}
-                           {categoria || <span className="text-emerald-300/50 font-bold">Opcional</span>}
+                           {(() => { const c = CATEGORIES.find(c => c.value === categoria); const Icon = c?.icon; return Icon ? <Icon size={12} className="shrink-0 text-emerald-400" /> : null; })()}
+                           {categoria || <span className="text-slate-500 font-bold">Opcional</span>}
                          </span>
-                         <ChevronDown size={12} className={`ml-1 shrink-0 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
+                         <ChevronDown size={12} className={`ml-1 shrink-0 text-slate-400 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
                        </button>
                        {catOpen && (
-                         <div className="absolute top-full left-0 right-0 mt-1.5 bg-emerald-950/80 backdrop-blur-xl border border-emerald-700/30 rounded-2xl overflow-hidden shadow-2xl z-20">
+                         <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-800/70 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-20">
                            {CATEGORIES.map(({ value, label, icon: Icon }) => (
                              <button
                                key={value || '__none__'}
                                type="button"
                                onClick={() => { setCategoria(value); setCatOpen(false); }}
-                               className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-black transition-all ${categoria === value ? 'bg-emerald-700/60 text-white' : 'text-emerald-100 hover:bg-emerald-800/60'}`}
+                               className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-black transition-all ${categoria === value ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-200 hover:bg-white/10'}`}
                              >
-                               {Icon ? <Icon size={13} className="shrink-0 opacity-70" /> : <span className="w-[13px]" />}
+                               {Icon ? <Icon size={13} className="shrink-0 opacity-60" /> : <span className="w-[13px]" />}
                                {label}
-                               {categoria === value && <Check size={11} className="ml-auto text-emerald-300" />}
+                               {categoria === value && <Check size={11} className="ml-auto text-emerald-400" />}
                              </button>
                            ))}
                          </div>
@@ -795,9 +795,9 @@ export default function EventDetail() {
                  </div>
                  {/* Amount */}
                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/70 mb-1.5 block">Monto</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1.5 block">Monto</label>
                     <div className="relative">
-                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pr-3 border-r border-emerald-600/40 text-emerald-100 font-black z-10 text-sm leading-none">
+                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pr-3 border-r border-white/10 text-slate-400 font-black z-10 text-sm leading-none">
                           {moneda}
                        </div>
                        <Input
@@ -807,7 +807,7 @@ export default function EventDetail() {
                          value={amount}
                          onChange={e => setAmount(e.target.value)}
                          required
-                         className="bg-emerald-600/20 border-none text-white pl-12 h-11 rounded-2xl font-black text-base"
+                         className="bg-white/5 border border-white/10 text-white pl-12 h-11 rounded-2xl font-black text-base"
                        />
                     </div>
                  </div>
@@ -816,7 +816,7 @@ export default function EventDetail() {
               <Button
                 type="submit"
                 disabled={addingExpense}
-                className="w-full py-3.5 h-auto rounded-2xl bg-slate-900 text-white hover:bg-black border-none font-black shadow-2xl shadow-emerald-950/40 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
+                className="w-full py-3.5 h-auto rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white border-none font-black shadow-lg shadow-emerald-500/20 uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95"
               >
                  {addingExpense ? 'Guardando...' : 'Confirmar Gasto'}
               </Button>
